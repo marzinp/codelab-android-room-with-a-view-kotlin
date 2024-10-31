@@ -1,0 +1,24 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/playerFragment">
+
+    <fragment
+        android:id="@+id/playerFragment"
+        android:name="com.example.android.badminton.UI.PlayerFragment">
+        <action
+            android:id="@+id/action_playerFragment_to_matchFragment"
+            app:destination="@id/matchFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/matchFragment"
+        android:name="com.example.android.badminton.UI.MatchFragment">
+        <argument
+            android:name="numCourts"
+            app:argType="integer" />
+    </fragment>
+    <action
+        android:id="@+id/action_playerFragment_to_matchFragment"
+        app:destination="@id/matchFragment" />
+</navigation>
