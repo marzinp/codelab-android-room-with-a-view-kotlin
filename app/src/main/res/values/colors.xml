@@ -19,4 +19,6 @@ limitations under the License. -->
     <color name="colorAccent">#FF4081</color>
     <color name="buttonLabel">#FFFFFF</color>
     <color name="title">#FFAA00</color>
+    <color name="team1">#550055</color>
+    <color name="team2">#0D5401</color>
 </resources>

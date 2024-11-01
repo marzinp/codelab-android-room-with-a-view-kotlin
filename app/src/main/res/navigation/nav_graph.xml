@@ -17,8 +17,8 @@
         <argument
             android:name="numCourts"
             app:argType="integer" />
+        <action
+            android:id="@+id/action_matchFragment_to_playerFragment"
+            app:destination="@id/playerFragment" />
     </fragment>
-    <action
-        android:id="@+id/action_playerFragment_to_matchFragment"
-        app:destination="@id/matchFragment" />
 </navigation>

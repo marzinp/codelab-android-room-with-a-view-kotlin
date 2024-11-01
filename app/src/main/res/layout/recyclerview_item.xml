@@ -8,7 +8,7 @@
         android:id="@+id/textViewName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="2dp"
         android:background="#FFD0A8"
         android:text="Player Name"
         android:textAlignment="center"
@@ -21,7 +21,7 @@
         android:id="@+id/textViewSkill"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="2dp"
         android:background="#FFD0A8"
         android:text="Skill Level"
         android:textAlignment="center"
@@ -33,6 +33,5 @@
         android:id="@+id/checkboxPresent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="Present" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

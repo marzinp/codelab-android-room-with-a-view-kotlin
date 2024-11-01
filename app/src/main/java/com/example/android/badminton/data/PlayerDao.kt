@@ -48,5 +48,7 @@ interface PlayerDao {
     // Update player's presence status
     @Query("UPDATE player_table SET isPresent = :isPresent WHERE id = :playerId")
     suspend fun updatePlayerPresence(playerId: Long, isPresent: Boolean)
-    // Other existing methods
+
+    @Query("UPDATE player_table SET isPresent = :isPresent")
+    suspend fun updateAllPlayersPresence(isPresent: Boolean)
 }

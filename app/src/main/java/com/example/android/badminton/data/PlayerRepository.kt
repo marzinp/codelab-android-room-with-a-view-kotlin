@@ -44,6 +44,9 @@ class PlayerRepository(private val playerDao: PlayerDao) {
     suspend fun updatePlayerPresence(playerId: Long, isPresent: Boolean) {
         playerDao.updatePlayerPresence(playerId, isPresent)
     }
+    suspend fun setAllPlayersPresence(isPresent: Boolean) {
+        playerDao.updateAllPlayersPresence(isPresent)
+    }
 
     // By default Room runs suspend queries off the main thread, therefore, we don't need to
     // implement anything else to ensure we're not doing long running database work

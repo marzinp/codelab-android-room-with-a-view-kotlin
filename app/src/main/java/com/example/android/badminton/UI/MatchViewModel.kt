@@ -52,41 +52,32 @@ class MatchViewModel(
 
     private val _shuffledTeams = MutableLiveData<List<Team>>()
     val shuffledTeams: LiveData<List<Team>> get() = _shuffledTeams
-
+    private val _offPlayers = MutableLiveData<List<Player>>()
 
     fun shuffleTeams(numCourts: Int) {
-        viewModelScope.launch {
-            val presentPlayers = playerRepository.getPresentPlayers().firstOrNull()?.shuffled() ?: emptyList()
-            Log.d("MatchViewModel", "Shuffled present players: $presentPlayers")
-            playerRepository.getPresentPlayers().collect { presentPlayers ->
-                val playersList = presentPlayers.toList() // Convert to a list if needed
-                if (playersList.isEmpty()) {
-                    Log.d("MatchViewModel", "No players are marked as present.")
-                    return@collect
-                }
+          viewModelScope.launch {
+              val presentPlayers = playerRepository.getPresentPlayers().firstOrNull()?.shuffled() ?: emptyList()
+              Log.d("MatchViewModel", "Shuffled present players: $presentPlayers")
+              playerRepository.getPresentPlayers().collect { presentPlayers ->
+                  val playersList = presentPlayers.toList() // Convert to a list if needed
+                  if (playersList.isEmpty()) {
+                      Log.d("MatchViewModel", "No players are marked as present.")
+                      return@collect
+                  }
 
-                val shuffledPlayers = playersList.shuffled() // Randomize the list
-                val teams = mutableListOf<Team>()
-                val playersPerTeam = 2 // Adjust based on your team size
+                  val shuffledPlayers = playersList.shuffled() // Randomize the list
+                  val teams = mutableListOf<Team>()
+                  val playersPerTeam = 2 // Adjust based on your team size
 
-                for (i in shuffledPlayers.indices step playersPerTeam) {
-                    val teamPlayers = shuffledPlayers.slice(i until minOf(i + playersPerTeam, shuffledPlayers.size))
-                    teams.add(Team(teamId = i / playersPerTeam, teamPlayers = teamPlayers))
-                }
-                _shuffledTeams.value = teams
-                Log.d("MatchViewModel", "shuffleTeams updated _shuffledTeams with: $teams")
-            }
-        }
-    }
-    fun refreshShuffledTeams() {
-        _shuffledTeams.value = _shuffledTeams.value
-    }
-    private fun generateShuffledTeams(numCourts: Int): List<Team> {
-        // Logic to shuffle players and create teams based on numCourts
-        // Placeholder for your actual team generation/shuffling logic
-        val teams: List<Team> = listOf() // Replace with actual team generation logic
-        return teams
-    }
+                  for (i in shuffledPlayers.indices step playersPerTeam) {
+                      val teamPlayers = shuffledPlayers.slice(i until minOf(i + playersPerTeam, shuffledPlayers.size))
+                      teams.add(Team(teamId = i / playersPerTeam, teamPlayers = teamPlayers))
+                  }
+                  _shuffledTeams.value = teams
+                  Log.d("MatchViewModel", "shuffleTeams updated _shuffledTeams with: $teams")
+              }
+          }
+      }
 }
 
 

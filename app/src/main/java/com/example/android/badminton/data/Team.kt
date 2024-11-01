@@ -26,5 +26,5 @@ import androidx.room.TypeConverters
 @TypeConverters(Converters::class) // Register the TypeConverter
 data class Team(
     @PrimaryKey(autoGenerate = true) val teamId: Int = 0,
-    val teamPlayers: List<Player> // List of players, can vary in size
+    var teamPlayers: List<Player> // List of players, can vary in size
 )

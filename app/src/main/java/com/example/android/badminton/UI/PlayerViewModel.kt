@@ -27,6 +27,7 @@ import com.example.android.badminton.data.Player
 import com.example.android.badminton.data.PlayerRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 /**
  * View Model to keep a reference to the player repository and
@@ -48,6 +49,22 @@ class PlayerViewModel(private val repository: PlayerRepository) : ViewModel() {
     fun togglePlayerPresence(playerId: Long, isPresent: Boolean) {
         viewModelScope.launch {
             repository.updatePlayerPresence(playerId, isPresent)
+        }
+    }
+    private val _updatingAllPlayers = MutableLiveData(false)
+
+    // Inside PlayerViewModel
+    // Inside PlayerViewModel
+    fun setAllPlayersPresent(isChecked: Boolean) {
+        viewModelScope.launch {
+            // Collect the first list of players emitted by the Flow
+            val players = allPlayers.first() // This collects the latest list of players once
+
+            players.forEach { player ->
+                if (player.isPresent != isChecked) {  // Update only if needed
+                    repository.updatePlayerPresence(player.id, isChecked)
+                }
+            }
         }
     }
     // Function to toggle sort order based on current selection

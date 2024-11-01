@@ -93,7 +93,12 @@ abstract class PlayerRoomDatabase : RoomDatabase() {
                     Player(0,"Véro", 3), Player(0,"Charline", 2),
                     Player(0,"Milan", 2),Player(0,"Neha", 1),
                     Player(0,"Corentin", 3),Player(0,"Céline", 2),
-                    Player(0,"Izia", 1),Player(0,"Elio", 3)
+                    Player(0,"Izia", 1),Player(0,"Elio", 3),
+                    Player(0,"Alex", 3), Player(0,"Sylvie", 2),
+                    Player(0,"Thierry", 3), Player(0,"Jean-Paul", 2),
+                    Player(0,"Keith", 2),Player(0,"Harry", 1),
+                    Player(0,"Peter", 3),Player(0,"Molly", 2),
+                    Player(0,"Chloe", 1),Player(0,"Olivia", 3)
                 )
 
                 for (player in players) {

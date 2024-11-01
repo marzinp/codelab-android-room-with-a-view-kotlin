@@ -19,19 +19,46 @@
 
         <TextView
             android:id="@+id/textViewNameTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:gravity="center_vertical"
             android:text="Name"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textViewSkillTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:gravity="center_vertical"
             android:text="Skill"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingEnd="8dp">
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Present"
+                android:textStyle="bold" />
+
+            <CheckBox
+                android:id="@+id/checkBoxPresent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- RecyclerView for displaying list of players -->
@@ -39,7 +66,7 @@
         android:id="@+id/recyclerviewPlayer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="@dimen/big_padding"
+        android:padding="@dimen/small_padding"
         app:layout_constraintTop_toBottomOf="@id/linearLayout"
         app:layout_constraintBottom_toTopOf="@id/linearLayoutCourts"
         app:layout_constraintStart_toStartOf="parent"

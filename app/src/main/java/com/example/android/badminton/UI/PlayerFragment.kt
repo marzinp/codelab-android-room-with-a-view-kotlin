@@ -5,14 +5,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.android.badminton.PlayersApplication
-import com.example.android.badminton.R
+import com.example.android.badminton.data.Player
 import com.example.android.badminton.databinding.FragmentPlayerBinding
+import kotlinx.coroutines.launch
 
 class PlayerFragment : Fragment() {
 
@@ -45,7 +46,28 @@ class PlayerFragment : Fragment() {
         val adapter = PlayerListAdapter(playerViewModel)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
+        // Set up presentChecbox listener
+        // In onViewCreated or a similar lifecycle method in PlayerFragment
+        lifecycleScope.launch {
+            playerViewModel.allPlayers.collect { players ->
+                // Remove the listener temporarily
+                binding.checkBoxPresent.setOnCheckedChangeListener(null)
 
+                // Update the column checkbox based on individual player presence states
+                val areAllPlayersPresent = players.all { it.isPresent }
+                binding.checkBoxPresent.isChecked = areAllPlayersPresent
+
+                // Reattach the listener
+                binding.checkBoxPresent.setOnCheckedChangeListener { _, isChecked ->
+                    playerViewModel.setAllPlayersPresent(isChecked)
+                }
+            }
+        }
+
+        // Listener for the column checkbox to update all players
+        binding.checkBoxPresent.setOnCheckedChangeListener { _, isChecked ->
+            playerViewModel.setAllPlayersPresent(isChecked)
+        }
         // Set up Shuffle button listener
         binding.buttonShuffle.setOnClickListener {
             val numCourts = binding.editTextNumCourts.text.toString().toIntOrNull() ?: 1
