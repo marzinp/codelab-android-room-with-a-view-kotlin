@@ -86,7 +86,7 @@ class MatchFragment : Fragment() {
         Log.d("MatchFragment", "Calculated off players: $offPlayers")
         return offPlayers
     }
-    private fun displayCourtsAndOffPlayers(teams: List<Team>, numCourts: Int) {
+    /*private fun displayCourtsAndOffPlayers(teams: List<Team>, numCourts: Int) {
         Log.d("MatchFragment", "Requested to display $numCourts courts with teams: $teams")
         binding.courtsContainer.removeAllViews()
 
@@ -175,6 +175,121 @@ class MatchFragment : Fragment() {
             binding.courtsContainer.addView(offPlayersLayout)
             Log.d("MatchFragment", "Added layout for OffPlayers with ${offPlayers.size} players.")
         }
+    }*/
+    private fun displayCourtsAndOffPlayers(teams: List<Team>, numCourts: Int) {
+        Log.d("MatchFragment", "Requested to display $numCourts courts with teams: $teams")
+        binding.courtsContainer.removeAllViews()
+
+        val playersPerCourt = 4
+        var maxPlayersForCourts = numCourts * playersPerCourt
+        val allPlayers = teams.flatMap { it.teamPlayers }
+
+        // Adjust max players for courts if there's a case where one court would be left with only 1 player
+        if (allPlayers.size == maxPlayersForCourts - 1) maxPlayersForCourts -= 2
+
+        val playersForCourts = allPlayers.take(maxPlayersForCourts)
+        var offPlayers = allPlayers.drop(maxPlayersForCourts)
+
+        // Split players into courts
+        val courts = playersForCourts.chunked(playersPerCourt).take(numCourts)
+
+        courts.forEachIndexed { index, courtPlayers ->
+            val courtContainer = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(0, 16, 0, 16) // Add space between courts
+                }
+            }
+
+            // Divide court players into two teams, handling cases with fewer players
+            val team1Players: List<Player>
+            val team2Players: List<Player>
+
+            when (courtPlayers.size) {
+                4 -> {
+                    team1Players = courtPlayers.take(2)
+                    team2Players = courtPlayers.takeLast(2)
+                }
+                3 -> {
+                    team1Players = courtPlayers.take(1)
+                    team2Players = courtPlayers.drop(1).take(1)
+                    offPlayers += courtPlayers.last() // Last player is left as off-player
+                }
+                2 -> {
+                    team1Players = courtPlayers.take(1)
+                    team2Players = courtPlayers.drop(1).take(1)
+                }
+                1 -> {
+                    offPlayers += courtPlayers.first()
+                    return@forEachIndexed // Skip adding this court
+                }
+                else -> {
+                    team1Players = emptyList()
+                    team2Players = emptyList()
+                }
+            }
+
+            // Add each team to the court
+            val team1Container = createTeamCard(team1Players, R.color.team1)
+            val team2Container = createTeamCard(team2Players, R.color.team2)
+
+            courtContainer.addView(team1Container)
+            courtContainer.addView(team2Container)
+            binding.courtsContainer.addView(courtContainer)
+        }
+
+        // Display off players
+        if (offPlayers.isNotEmpty()) displayOffPlayers(offPlayers)
+    }
+
+    // Helper to create team cards
+    private fun createTeamCard(players: List<Player>, colorRes: Int): MaterialCardView {
+        return MaterialCardView(requireContext()).apply {
+            setContentPadding(16, 16, 16, 16)
+            radius = 8f
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            cardElevation = 4f
+            strokeColor = getColor(requireContext(), colorRes)
+            strokeWidth = 4
+            addView(createTeamView(players, colorRes, "Skill Sum: ${players.sumOf { it.skill }}"))
+        }
+    }
+
+    // Helper to display off players
+    private fun displayOffPlayers(offPlayers: List<Player>) {
+        val offPlayersTitle = TextView(requireContext()).apply {
+            text = "Off Players:"
+            textSize = 18f
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        binding.courtsContainer.addView(offPlayersTitle)
+
+        val offPlayersLayout = FlexboxLayout(requireContext()).apply {
+            flexDirection = FlexDirection.ROW
+            flexWrap = FlexWrap.WRAP
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        offPlayers.forEach { player ->
+            val playerView = TextView(requireContext()).apply {
+                text = player.name
+                textSize = 18f
+                setPadding(8, 8, 8, 8)
+            }
+            offPlayersLayout.addView(playerView)
+        }
+        binding.courtsContainer.addView(offPlayersLayout)
+        Log.d("MatchFragment", "Added layout for OffPlayers with ${offPlayers.size} players.")
     }
 
     private fun createTeamView(players: List<Player>, colorRes: Int, skillSumText: String): LinearLayout {

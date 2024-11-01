@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -14,6 +15,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.android.badminton.PlayersApplication
 import com.example.android.badminton.R
+import com.example.android.badminton.UserSession
 import com.example.android.badminton.data.Player
 import com.example.android.badminton.databinding.FragmentPlayerBinding
 import kotlinx.coroutines.launch
@@ -53,11 +55,17 @@ class PlayerFragment : Fragment() {
                 showOptionsDialog(player)
             }
         )
+// Observe UserSession.isAdmin to update the button visibility
+        UserSession.isAdmin.observe(viewLifecycleOwner) { isAdmin ->
+            updateVisibility(isAdmin)
+        }
+
         // Inside onViewCreated or similar in PlayerFragment
         // Inside onViewCreated or similar in PlayerFragment
         binding.fabAddPlayer.setOnClickListener {
             showPlayerOptionsDialog(null) // Passing null to indicate adding a new player
         }
+
         binding.recyclerviewPlayer.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
@@ -116,7 +124,8 @@ class PlayerFragment : Fragment() {
     }
     private fun showOptionsDialog(player: Player) {
         val options = arrayOf("Edit", "Delete")
-
+        if (UserSession.isAdmin.value == true) {
+            // Allow editing player
         AlertDialog.Builder(requireContext())
             .setTitle("${player.name}'s Options")
             .setItems(options) { _, which ->
@@ -125,7 +134,10 @@ class PlayerFragment : Fragment() {
                     1 -> confirmDeletePlayer(player)     // Delete selected
                 }
             }
-            .show()
+            .show()}
+        else {
+            Toast.makeText(context, "Admin permissions required", Toast.LENGTH_SHORT).show()
+        }
     }
     private fun confirmDeletePlayer(player: Player) {
         AlertDialog.Builder(requireContext())
@@ -138,6 +150,8 @@ class PlayerFragment : Fragment() {
             .show()
     }
     private fun showPlayerOptionsDialog(player: Player?) {
+
+        if (UserSession.isAdmin.value==true) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(if (player == null) "Add Player" else "Edit Player")
 
@@ -172,9 +186,19 @@ class PlayerFragment : Fragment() {
         }
 
         builder.setNegativeButton("Cancel", null)
-        builder.show()
+        builder.show()}
+        else{
+            Toast.makeText(context, "Admin permissions required", Toast.LENGTH_SHORT).show()
+        }
     }
+    private fun updateVisibility(isAdmin: Boolean) {
+        Log.d("PlayerFragment", "Admin status updated: $isAdmin")
+        // Set visibility of the add player button
+        binding.fabAddPlayer.visibility = if (isAdmin) View.VISIBLE else View.GONE
 
+        // Update each player's skill visibility directly in the adapter
+        (binding.recyclerviewPlayer.adapter as? PlayerListAdapter)?.setAdminVisibility(isAdmin)
+    }
 
     private fun editPlayer(player: Player) {
         // Inflate the dialog layout

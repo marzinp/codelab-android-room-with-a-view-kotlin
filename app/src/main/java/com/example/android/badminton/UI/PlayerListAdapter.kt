@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.android.badminton.R
+import com.example.android.badminton.UserSession
 import com.example.android.badminton.data.Player
 
 class PlayerListAdapter(
@@ -35,15 +36,36 @@ class PlayerListAdapter(
     private val playerViewModel: PlayerViewModel
 ) : ListAdapter<Player, PlayerListAdapter.PlayerViewHolder>(PlayerDiffCallback) {
 
+    private var isAdmin: Boolean = false
+
+    // Function to update admin visibility in the adapter
+    fun setAdminVisibility(isAdmin: Boolean) {
+        this.isAdmin = isAdmin
+        notifyDataSetChanged() // Refresh to apply visibility changes
+    }
+
     inner class PlayerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val playerName: TextView = itemView.findViewById(R.id.textViewName)
         private val playerSkill: TextView = itemView.findViewById(R.id.textViewSkill)
         private val playerPresenceCheckbox: CheckBox = itemView.findViewById(R.id.checkboxPresent)
 
         fun bind(player: Player) {
+            // Remove any previous listeners to avoid triggering them on rebind
+            playerPresenceCheckbox.setOnCheckedChangeListener(null)
+
+            // Set checkbox state based on player's presence
+            playerPresenceCheckbox.isChecked = player.isPresent
+
+            // Reattach the listener for changes
+            playerPresenceCheckbox.setOnCheckedChangeListener { _, isChecked ->
+                playerViewModel.togglePlayerPresence(player.id, isChecked)
+            }
             playerName.text = player.name
             playerSkill.text = player.skill.toString()
             playerPresenceCheckbox.isChecked = player.isPresent
+
+            // Conditionally display skill based on admin status
+            playerSkill.visibility = if (isAdmin) View.VISIBLE else View.GONE
 
             playerPresenceCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 playerViewModel.togglePlayerPresence(player.id, isChecked)
