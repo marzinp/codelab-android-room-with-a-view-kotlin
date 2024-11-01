@@ -1,3 +1,4 @@
+// UserSession: No changes needed; this code is good
 package com.example.android.badminton
 
 import androidx.lifecycle.LiveData

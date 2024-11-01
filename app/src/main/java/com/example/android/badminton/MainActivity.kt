@@ -6,26 +6,24 @@ import android.util.Log
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
-import com.example.android.badminton.data.PlayerRoomDatabase
 
 class MainActivity : AppCompatActivity() {
     private var passwordEntered = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // Restore the password state on orientation change
+
+        // Restore the password state and set admin status accordingly
         passwordEntered = savedInstanceState?.getBoolean("PASSWORD_ENTERED", false) ?: false
+        UserSession.setAdminStatus(passwordEntered) // Update UserSession based on saved status
 
         if (!passwordEntered) {
             showPasswordDialog()
         }
-
 
         // Set up Navigation
         val navHostFragment = supportFragmentManager
@@ -34,20 +32,28 @@ class MainActivity : AppCompatActivity() {
         val appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
+
     private fun showPasswordDialog() {
         val passwordInput = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
-        val dialog = AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle("Admin Password")
             .setMessage("Enter the admin password to unlock full features")
-            .setView(passwordInput)  // Directly set the EditText here
+            .setView(passwordInput)
             .setPositiveButton("OK") { _, _ ->
                 val enteredPassword = passwordInput.text.toString()
-                UserSession.setAdminStatus(enteredPassword == "123") // Use the real password condition
+                passwordEntered = enteredPassword == "123" // Set based on entered password
+                UserSession.setAdminStatus(passwordEntered)
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    // Save the password state to avoid re-triggering on configuration change
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("PASSWORD_ENTERED", passwordEntered)
     }
 }
