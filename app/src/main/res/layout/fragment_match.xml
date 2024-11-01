@@ -10,11 +10,24 @@
         android:padding="16dp">
 
         <!-- Container for dynamically added court tables -->
+
         <LinearLayout
             android:id="@+id/courtsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical" >
 
-         </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/buttonShuffleMatch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:text="Shuffle" />
+
+    </LinearLayout>
+
 </ScrollView>
+

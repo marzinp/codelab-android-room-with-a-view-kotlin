@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.android.badminton.PlayersApplication
+import com.example.android.badminton.R
 import com.example.android.badminton.data.Player
 import com.example.android.badminton.databinding.FragmentPlayerBinding
 import kotlinx.coroutines.launch
@@ -69,12 +70,13 @@ class PlayerFragment : Fragment() {
             playerViewModel.setAllPlayersPresent(isChecked)
         }
         // Set up Shuffle button listener
-        binding.buttonShuffle.setOnClickListener {
-            val numCourts = binding.editTextNumCourts.text.toString().toIntOrNull() ?: 1
-            Log.d("PlayerFragment", "Navigating to MatchFragment with $numCourts courts")
+        binding.buttonShufflePlayer.setOnClickListener {
+            val numCourts = binding.editTextNumCourts.text.toString().toIntOrNull() ?: 3
+            val bundle = Bundle().apply {
+                putInt("numCourts", numCourts)
+            }
+            findNavController().navigate(R.id.action_playerFragment_to_matchFragment, bundle)
             matchViewModel.shuffleTeams(numCourts)
-            val action = PlayerFragmentDirections.actionPlayerFragmentToMatchFragment(numCourts)
-            findNavController().navigate(action)
         }
 
         // Observe the shuffled teams to update the UI whenever they are shuffled

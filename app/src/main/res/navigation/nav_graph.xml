@@ -16,7 +16,8 @@
         android:name="com.example.android.badminton.UI.MatchFragment">
         <argument
             android:name="numCourts"
-            app:argType="integer" />
+            app:argType="integer"
+            android:defaultValue="3" />
         <action
             android:id="@+id/action_matchFragment_to_playerFragment"
             app:destination="@id/playerFragment" />
