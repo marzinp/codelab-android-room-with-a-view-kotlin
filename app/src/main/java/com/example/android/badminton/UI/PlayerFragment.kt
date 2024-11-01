@@ -1,10 +1,12 @@
 package com.example.android.badminton.UI
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -44,7 +46,19 @@ class PlayerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val recyclerView = binding.recyclerviewPlayer
-        val adapter = PlayerListAdapter(playerViewModel)
+        val adapter = PlayerListAdapter(
+            playerViewModel = playerViewModel,
+            onItemLongClick = { player ->
+                // Define what should happen when a player row is long-pressed
+                showOptionsDialog(player)
+            }
+        )
+        // Inside onViewCreated or similar in PlayerFragment
+        // Inside onViewCreated or similar in PlayerFragment
+        binding.fabAddPlayer.setOnClickListener {
+            showPlayerOptionsDialog(null) // Passing null to indicate adding a new player
+        }
+        binding.recyclerviewPlayer.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
         // Set up presentChecbox listener
@@ -98,8 +112,98 @@ class PlayerFragment : Fragment() {
         binding.textViewSkillTitle.setOnClickListener {
             playerViewModel.toggleSortOrder(SortColumn.SKILL)
         }
+
+    }
+    private fun showOptionsDialog(player: Player) {
+        val options = arrayOf("Edit", "Delete")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("${player.name}'s Options")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showPlayerOptionsDialog(player) // Edit selected
+                    1 -> confirmDeletePlayer(player)     // Delete selected
+                }
+            }
+            .show()
+    }
+    private fun confirmDeletePlayer(player: Player) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete ${player.name}?")
+            .setMessage("Are you sure you want to delete this player?")
+            .setPositiveButton("Delete") { _, _ ->
+                playerViewModel.deletePlayer(player) // Assuming deletePlayer is defined in your ViewModel
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    private fun showPlayerOptionsDialog(player: Player?) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle(if (player == null) "Add Player" else "Edit Player")
+
+        // Inflate the dialog layout and set up the fields
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_player, null)
+        builder.setView(dialogView)
+
+        // Get references to the input fields in dialog_player layout
+        val nameInput = dialogView.findViewById<EditText>(R.id.editTextPlayerName)
+        val skillInput = dialogView.findViewById<EditText>(R.id.editTextPlayerSkill)
+
+        if (player != null) {
+            // Pre-fill the fields with player data if editing
+            nameInput.setText(player.name)
+            skillInput.setText(player.skill.toString())
+        }
+
+        // Set up the dialog buttons
+        builder.setPositiveButton(if (player == null) "Add" else "Update") { _, _ ->
+            val name = nameInput.text.toString()
+            val skill = skillInput.text.toString().toIntOrNull() ?: 0
+
+            if (player == null) {
+                // Add new player logic
+                val newPlayer = Player(name = name, skill = skill, isPresent = true)
+                playerViewModel.addPlayer(newPlayer)
+            } else {
+                // Update existing player logic
+                val updatedPlayer = player.copy(name = name, skill = skill)
+                playerViewModel.updatePlayer(updatedPlayer)
+            }
+        }
+
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
     }
 
+
+    private fun editPlayer(player: Player) {
+        // Inflate the dialog layout
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_player, null)
+        val playerNameEditText = dialogView.findViewById<EditText>(R.id.editTextPlayerName)
+        val playerSkillEditText = dialogView.findViewById<EditText>(R.id.editTextPlayerSkill)
+
+        // Set existing values in the dialog
+        playerNameEditText.setText(player.name)
+        playerSkillEditText.setText(player.skill.toString())
+
+        // Build the dialog
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Player")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                // Save the updated player information
+                val newName = playerNameEditText.text.toString()
+                val newSkill = playerSkillEditText.text.toString().toIntOrNull() ?: player.skill
+                val updatedPlayer = player.copy(name = newName, skill = newSkill)
+                playerViewModel.updatePlayer(updatedPlayer)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deletePlayer(player: Player) {
+        playerViewModel.deletePlayer(player)
+    }
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

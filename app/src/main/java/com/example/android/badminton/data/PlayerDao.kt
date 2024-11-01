@@ -1,9 +1,11 @@
 package com.example.android.badminton.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -33,7 +35,7 @@ interface PlayerDao {
     suspend fun getById(id: Long): Player?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertPlayer(player: Player)
+    suspend fun addPlayer(player: Player)
 
     @Query("DELETE FROM player_table")
     suspend fun deleteAllPlayers()
@@ -51,4 +53,10 @@ interface PlayerDao {
 
     @Query("UPDATE player_table SET isPresent = :isPresent")
     suspend fun updateAllPlayersPresence(isPresent: Boolean)
+
+    @Update
+    suspend fun update(player: Player)
+
+    @Delete
+    suspend fun delete(player: Player)
 }

@@ -7,7 +7,18 @@
     android:layout_height="match_parent"
     tools:context="com.example.android.badminton.UI.PlayerFragment">
 
-    <!-- Header Layout for Titles -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_player"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="end|bottom"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="@string/add_player"
+        android:src="@drawable/ic_add"
+        app:layout_constraintStart_toStartOf="@+id/linearLayout"
+        app:layout_constraintTop_toTopOf="@+id/linearLayout"></com.google.android.material.floatingactionbutton.FloatingActionButton>
+
     <LinearLayout
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
@@ -72,6 +83,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/recyclerview_item" />
+
     <LinearLayout
         android:id="@+id/linearLayoutCourts"
         android:layout_width="match_parent"
@@ -100,6 +112,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:text="Shuffle" />
+
     </LinearLayout>
     <!-- Shuffle Button -->
 

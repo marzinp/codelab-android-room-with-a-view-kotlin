@@ -18,7 +18,7 @@ object DatabaseInitializer {
 
             // Trigger a write operation to finalize database creation
             scope.launch {
-                db.playerDao().insertPlayer(Player(0,"Dummy", 0,true)) // Insert a dummy player
+                db.playerDao().addPlayer(Player(0,"Dummy", 0,true)) // Insert a dummy player
                 Log.d("RoomDatabase", "Triggered write operation to finalize database creation.")
             }
         } else {

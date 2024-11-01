@@ -53,7 +53,6 @@ class MatchViewModel(
             }
         }
     }
-
 }
 
 class MatchViewModelFactory(

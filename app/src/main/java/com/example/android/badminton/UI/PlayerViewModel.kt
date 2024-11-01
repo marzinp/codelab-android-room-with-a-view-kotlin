@@ -76,6 +76,22 @@ class PlayerViewModel(private val repository: PlayerRepository) : ViewModel() {
                 SortOrder.BY_SKILL_DESC else SortOrder.BY_SKILL_ASC
         }
     }
+    fun updatePlayer(player: Player) {
+        viewModelScope.launch {
+            repository.updatePlayer(player) // Ensure this method exists in PlayerRepository
+        }
+    }
+
+    fun deletePlayer(player: Player) {
+        viewModelScope.launch {
+            repository.deletePlayer(player) // Ensure this method exists in PlayerRepository
+        }
+    }
+    fun addPlayer(player: Player) {
+        viewModelScope.launch {
+            repository.addPlayer(player) // Ensure this method exists in PlayerRepository
+        }
+    }
 
 }
 

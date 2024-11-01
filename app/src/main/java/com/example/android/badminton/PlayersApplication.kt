@@ -46,7 +46,7 @@ class PlayersApplication : Application() {
 
         // Trigger a write operation to finalize the database creation
         applicationScope.launch {
-            database.playerDao().insertPlayer(Player(0,"InitializationCheck", 0,true)) // Insert a temporary player
+            database.playerDao().addPlayer(Player(0,"InitializationCheck", 0,true)) // Insert a temporary player
             database.playerDao().deletePlayerByName("InitializationCheck") // Clear this initial data
             Log.d("RoomDatabase", "Forced database creation with a write operation.")
         }

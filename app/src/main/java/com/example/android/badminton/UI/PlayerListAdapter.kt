@@ -16,6 +16,8 @@
 
 package com.example.android.badminton.UI
 
+import android.app.AlertDialog
+import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -28,8 +30,31 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.android.badminton.R
 import com.example.android.badminton.data.Player
 
-class PlayerListAdapter(private val viewModel: PlayerViewModel) :
-    ListAdapter<Player, PlayerListAdapter.PlayerViewHolder>(PLAYERS_COMPARATOR) {
+class PlayerListAdapter(
+    private val onItemLongClick: (Player) -> Unit,
+    private val playerViewModel: PlayerViewModel
+) : ListAdapter<Player, PlayerListAdapter.PlayerViewHolder>(PlayerDiffCallback) {
+
+    inner class PlayerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val playerName: TextView = itemView.findViewById(R.id.textViewName)
+        private val playerSkill: TextView = itemView.findViewById(R.id.textViewSkill)
+        private val playerPresenceCheckbox: CheckBox = itemView.findViewById(R.id.checkboxPresent)
+
+        fun bind(player: Player) {
+            playerName.text = player.name
+            playerSkill.text = player.skill.toString()
+            playerPresenceCheckbox.isChecked = player.isPresent
+
+            playerPresenceCheckbox.setOnCheckedChangeListener { _, isChecked ->
+                playerViewModel.togglePlayerPresence(player.id, isChecked)
+            }
+
+            itemView.setOnLongClickListener {
+                onItemLongClick(player)
+                true
+            }
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -38,29 +63,11 @@ class PlayerListAdapter(private val viewModel: PlayerViewModel) :
     }
 
     override fun onBindViewHolder(holder: PlayerViewHolder, position: Int) {
-        val currentPlayer = getItem(position)
-        holder.bind(currentPlayer)
-    }
-
-    inner class PlayerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val playerNameView: TextView = itemView.findViewById(R.id.textViewName)
-        private val playerSkillView: TextView = itemView.findViewById(R.id.textViewSkill)
-        private val checkboxPresent: CheckBox = itemView.findViewById(R.id.checkboxPresent)
-
-        fun bind(player: Player) {
-            playerNameView.text = player.name
-            playerSkillView.text = "Skill: ${player.skill}"
-            checkboxPresent.isChecked = player.isPresent
-
-            // Update presence status on checkbox change
-            checkboxPresent.setOnCheckedChangeListener { _, isChecked ->
-                viewModel.togglePlayerPresence(player.id, isChecked)
-            }
-        }
+        holder.bind(getItem(position))
     }
 
     companion object {
-        private val PLAYERS_COMPARATOR = object : DiffUtil.ItemCallback<Player>() {
+        private val PlayerDiffCallback = object : DiffUtil.ItemCallback<Player>() {
             override fun areItemsTheSame(oldItem: Player, newItem: Player): Boolean {
                 return oldItem.id == newItem.id
             }
@@ -71,4 +78,3 @@ class PlayerListAdapter(private val viewModel: PlayerViewModel) :
         }
     }
 }
-

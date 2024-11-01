@@ -103,7 +103,7 @@ abstract class PlayerRoomDatabase : RoomDatabase() {
 
                 for (player in players) {
                     Log.d("RoomDatabase", "Inserting player: ${player.name}")
-                    playerDao.insertPlayer(player)
+                    playerDao.addPlayer(player)
                 }
 
                 teamDao.deleteAllTeams()
