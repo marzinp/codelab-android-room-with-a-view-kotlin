@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             .setView(passwordInput)
             .setPositiveButton("OK") { _, _ ->
                 val enteredPassword = passwordInput.text.toString()
-                passwordEntered = enteredPassword == "123" // Set based on entered password
+                passwordEntered = enteredPassword == "mayavi" // Set based on entered password
                 UserSession.setAdminStatus(passwordEntered)
             }
             .setNegativeButton("Cancel", null)

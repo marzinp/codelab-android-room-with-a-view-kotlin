@@ -22,6 +22,7 @@ import com.example.android.badminton.data.Player
 import com.example.android.badminton.data.PlayerRepository
 import com.example.android.badminton.data.PlayerRoomDatabase
 import com.example.android.badminton.data.MatchRepository
+import com.example.android.badminton.data.TeamHistoryRepository
 import com.example.android.badminton.data.TeamRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,7 @@ class PlayersApplication : Application() {
     val matchRepository: MatchRepository by lazy { MatchRepository(database.matchDao()) }
     val playerRepository: PlayerRepository by lazy { PlayerRepository(database.playerDao()) }
     val teamRepository: TeamRepository by lazy { TeamRepository(database.teamDao()) }
+    val teamHistoryRepository by lazy { TeamHistoryRepository(database.teamHistoryDao()) }
 
     override fun onCreate() {
         super.onCreate()
