@@ -10,6 +10,6 @@ interface TeamHistoryDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTeamHistory(teamHistory: TeamHistory)
 
-    @Query("SELECT * FROM teamhistory WHERE teamId = :teamId")
+    @Query("SELECT * FROM teamhistory_table WHERE teamId = :teamId")
     suspend fun getTeamHistory(teamId: Int): TeamHistory?
 }
