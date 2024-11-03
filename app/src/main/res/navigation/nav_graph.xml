@@ -5,7 +5,7 @@
 
     <fragment
         android:id="@+id/playerFragment"
-        android:name="com.example.android.badminton.UI.PlayerFragment">
+        android:name="com.marzinp.badminton.UI.PlayerFragment">
         <action
             android:id="@+id/action_playerFragment_to_matchFragment"
             app:destination="@id/matchFragment" />
@@ -13,7 +13,7 @@
 
     <fragment
         android:id="@+id/matchFragment"
-        android:name="com.example.android.badminton.UI.MatchFragment">
+        android:name="com.marzinp.badminton.UI.MatchFragment">
         <argument
             android:name="numCourts"
             app:argType="integer"

@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.example.android.badminton.MainActivity"
+            android:name="com.marzinp.badminton.MainActivity"
             android:label="@string/app_name"
             android:exported="true">
             <intent-filter>

@@ -2,13 +2,14 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
 }
 
 android {
-    namespace 'com.example.android.badminton' // Add this line if it's missing
+    namespace 'com.marzinp.badminton' // Add this line if it's missing
     compileSdkVersion 35
     defaultConfig {
-        applicationId "com.example.android.badminton"
+        applicationId 'com.marzinp.badminton'
         minSdkVersion 24
         targetSdkVersion 35
         versionCode 1
@@ -42,6 +43,11 @@ repositories {
 }
 
 dependencies {
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.52'
+    kapt 'com.google.dagger:hilt-android-compiler:2.52'
+
+
     // Navigation components
     implementation "androidx.navigation:navigation-fragment-ktx:2.8.3"
     implementation "androidx.navigation:navigation-ui-ktx:2.8.3"
@@ -63,7 +69,7 @@ dependencies {
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
 
     // UI Components
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
@@ -79,5 +85,5 @@ dependencies {
     }
     androidTestImplementation "androidx.test.ext:junit:1.2.1"
     //GSON
-    implementation 'com.google.code.gson:gson:2.8.8' // or latest version
+    implementation 'com.google.code.gson:gson:2.11.0' // or latest version
 }
