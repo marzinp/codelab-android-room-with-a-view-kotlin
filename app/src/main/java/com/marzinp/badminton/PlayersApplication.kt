@@ -18,12 +18,12 @@ package com.marzinp.badminton
 
 import android.app.Application
 import android.util.Log
-import com.marzinp.badminton.data.MatchRepository
-import com.marzinp.badminton.data.Player
-import com.marzinp.badminton.data.PlayerRepository
-import com.marzinp.badminton.data.PlayerRoomDatabase
-import com.marzinp.badminton.data.TeamHistoryRepository
-import com.marzinp.badminton.data.TeamRepository
+import com.marzinp.badminton.repository.MatchRepository
+import com.marzinp.badminton.model.Player
+import com.marzinp.badminton.repository.PlayerRepository
+import com.marzinp.badminton.database.PlayerRoomDatabase
+import com.marzinp.badminton.repository.TeamHistoryRepository
+import com.marzinp.badminton.repository.TeamRepository
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
