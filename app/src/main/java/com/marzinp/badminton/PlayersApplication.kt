@@ -22,8 +22,6 @@ import com.marzinp.badminton.repository.MatchRepository
 import com.marzinp.badminton.model.Player
 import com.marzinp.badminton.repository.PlayerRepository
 import com.marzinp.badminton.database.PlayerRoomDatabase
-import com.marzinp.badminton.repository.TeamHistoryRepository
-import com.marzinp.badminton.repository.TeamRepository
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,8 +39,6 @@ class PlayersApplication : Application() {
     // Declare repositories as properties accessible across the application
     val matchRepository: MatchRepository by lazy { MatchRepository(database.matchDao()) }
     val playerRepository: PlayerRepository by lazy { PlayerRepository(database.playerDao()) }
-    val teamRepository: TeamRepository by lazy { TeamRepository(database.teamDao()) }
-    val teamHistoryRepository by lazy { TeamHistoryRepository(database.teamHistoryDao()) }
 
     override fun onCreate() {
         super.onCreate()

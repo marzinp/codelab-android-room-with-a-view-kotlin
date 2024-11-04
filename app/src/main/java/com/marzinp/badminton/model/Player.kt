@@ -22,7 +22,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "player_table")
 data class Player(
-    @PrimaryKey(autoGenerate = true) val id: Long=0,
+    @PrimaryKey(autoGenerate = true) val id: Int=0,
     val name: String,
     val skill: Int,
     val isPresent: Boolean=false

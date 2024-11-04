@@ -4,6 +4,7 @@ import androidx.annotation.WorkerThread
 import com.marzinp.badminton.database.TeamDao
 import com.marzinp.badminton.model.Team
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
 
 /**
@@ -14,9 +15,9 @@ import kotlinx.coroutines.flow.Flow
  * Abstracted Repository as promoted by the Architecture Guide.
  * https://developer.android.com/topic/libraries/architecture/guide.html
  */
-class TeamRepository(private val teamDao: TeamDao) {
+class TeamRepository @Inject constructor(private val teamDao: TeamDao) {
 
-    // Now a Flow, so it can be observed for real-time updates
+    // Utiliser Flow pour observer les équipes en temps réel
     val allTeams: Flow<List<Team>> = teamDao.getAllTeams()
 
     @WorkerThread
@@ -27,6 +28,11 @@ class TeamRepository(private val teamDao: TeamDao) {
     @WorkerThread
     suspend fun insertTeams(teams: List<Team>) {
         teamDao.insertTeams(teams)
+    }
+
+    // Nouvelle méthode pour obtenir les équipes d'un joueur spécifique
+    suspend fun getTeamsForPlayer(playerId: Int): List<Team> {
+        return teamDao.getTeamsForPlayer(playerId)
     }
 
     @WorkerThread

@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.getColor
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.marzinp.badminton.R
 import com.marzinp.badminton.model.Player
@@ -25,6 +26,7 @@ import com.google.android.flexbox.FlexboxLayout
 import com.google.android.material.card.MaterialCardView
 import com.marzinp.badminton.viewmodel.MatchViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MatchFragment : Fragment() {
@@ -66,9 +68,9 @@ class MatchFragment : Fragment() {
         }
     }
 
-    private fun extractOffPlayers(teams: List<Team>, numCourts: Int): List<Player> {
+    private fun extractOffPlayers(teams: List<Team>, numCourts: Int): List<Int> {
         val playersPerCourt = 4
-        val totalPlayers = teams.flatMap { it.teamPlayers }
+        val totalPlayers = teams.flatMap { it.playerIds }
         val offPlayers = totalPlayers.drop(numCourts * playersPerCourt)
         Log.d("MatchFragment", "Calculated off players: $offPlayers")
         return offPlayers
@@ -80,68 +82,85 @@ class MatchFragment : Fragment() {
 
         val playersPerCourt = 4
         var maxPlayersForCourts = numCourts * playersPerCourt
-        val allPlayers = teams.flatMap { it.teamPlayers }
+        val allPlayerIds = teams.flatMap { it.playerIds }
 
-        // Adjust max players for courts if there's a case where one court would be left with only 1 player
-        if (allPlayers.size == maxPlayersForCourts - 1) maxPlayersForCourts -= 2
+        // Ajustement si un court reste avec un seul joueur
+        if (allPlayerIds.size == maxPlayersForCourts - 1) maxPlayersForCourts -= 2
 
-        val playersForCourts = allPlayers.take(maxPlayersForCourts)
-        var offPlayers = allPlayers.drop(maxPlayersForCourts)
+        val playersForCourtsIds = allPlayerIds.take(maxPlayersForCourts)
+        val offPlayerIds = allPlayerIds.drop(maxPlayersForCourts).toMutableList()
 
-        // Split players into courts
-        val courts = playersForCourts.chunked(playersPerCourt).take(numCourts)
+        viewLifecycleOwner.lifecycleScope.launch {
+            // Boucle pour chaque court avec les joueurs récupérés
+            playersForCourtsIds.chunked(playersPerCourt).take(numCourts).forEachIndexed { index, courtPlayerIds ->
+                Log.d("MatchFragment", "Creating view for court $index with players: $courtPlayerIds")
 
-        courts.forEachIndexed { _index, courtPlayers ->
-            val courtContainer = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.HORIZONTAL
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    setMargins(0, 16, 0, 16) // Add space between courts
+                val courtContainer = LinearLayout(requireContext()).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(0, 16, 0, 16) // Espace entre les courts
+                    }
                 }
+
+                val team1PlayerIds: List<Int>
+                val team2PlayerIds: List<Int>
+
+                when (courtPlayerIds.size) {
+                    4 -> {
+                        team1PlayerIds = courtPlayerIds.take(2)
+                        team2PlayerIds = courtPlayerIds.takeLast(2)
+                    }
+                    3 -> {
+                        team1PlayerIds = courtPlayerIds.take(1)
+                        team2PlayerIds = courtPlayerIds.drop(1).take(1)
+                        offPlayerIds += courtPlayerIds.last()
+                    }
+                    2 -> {
+                        team1PlayerIds = courtPlayerIds.take(1)
+                        team2PlayerIds = courtPlayerIds.drop(1).take(1)
+                    }
+                    1 -> {
+                        offPlayerIds += courtPlayerIds.first()
+                        Log.d("MatchFragment", "Skipping court $index as it has only one player.")
+                        return@forEachIndexed // Passer ce court s'il n'y a qu'un joueur
+                    }
+                    else -> {
+                        team1PlayerIds = emptyList()
+                        team2PlayerIds = emptyList()
+                    }
+                }
+
+                // Récupérer les joueurs pour les deux équipes de chaque court
+                val team1Players = matchViewModel.getPlayersForTeam(team1PlayerIds)
+                val team2Players = matchViewModel.getPlayersForTeam(team2PlayerIds)
+
+                Log.d("MatchFragment", "Team 1 for court $index: $team1Players")
+                Log.d("MatchFragment", "Team 2 for court $index: $team2Players")
+
+                val team1Container = createTeamCard(team1Players, R.color.team1)
+                val team2Container = createTeamCard(team2Players, R.color.team2)
+
+                courtContainer.addView(team1Container)
+                courtContainer.addView(team2Container)
+
+                // Ajouter le court au conteneur principal
+                binding.courtsContainer.addView(courtContainer)
+                Log.d("MatchFragment", "Court $index added to courtsContainer.")
             }
 
-            // Divide court players into two teams, handling cases with fewer players
-            val team1Players: List<Player>
-            val team2Players: List<Player>
-
-            when (courtPlayers.size) {
-                4 -> {
-                    team1Players = courtPlayers.take(2)
-                    team2Players = courtPlayers.takeLast(2)
-                }
-                3 -> {
-                    team1Players = courtPlayers.take(1)
-                    team2Players = courtPlayers.drop(1).take(1)
-                    offPlayers += courtPlayers.last() // Last player is left as off-player
-                }
-                2 -> {
-                    team1Players = courtPlayers.take(1)
-                    team2Players = courtPlayers.drop(1).take(1)
-                }
-                1 -> {
-                    offPlayers += courtPlayers.first()
-                    return@forEachIndexed // Skip adding this court
-                }
-                else -> {
-                    team1Players = emptyList()
-                    team2Players = emptyList()
-                }
+            // Afficher les joueurs "off" après tous les courts
+            val offPlayers = matchViewModel.getPlayersForTeam(offPlayerIds)
+            if (offPlayers.isNotEmpty()) {
+                displayOffPlayers(offPlayers)
+                Log.d("MatchFragment", "Off players displayed after courts.")
             }
-
-            // Add each team to the court
-            val team1Container = createTeamCard(team1Players, R.color.team1)
-            val team2Container = createTeamCard(team2Players, R.color.team2)
-
-            courtContainer.addView(team1Container)
-            courtContainer.addView(team2Container)
-            binding.courtsContainer.addView(courtContainer)
         }
-
-        // Display off players
-        if (offPlayers.isNotEmpty()) displayOffPlayers(offPlayers)
     }
+
+
 
     // Helper to create team cards
     private fun createTeamCard(players: List<Player>, colorRes: Int): MaterialCardView {

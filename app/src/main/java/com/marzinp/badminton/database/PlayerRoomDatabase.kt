@@ -27,7 +27,6 @@ import com.marzinp.badminton.PlayersApplication
 import com.marzinp.badminton.model.Match
 import com.marzinp.badminton.model.Player
 import com.marzinp.badminton.model.Team
-import com.marzinp.badminton.model.TeamHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -41,12 +40,11 @@ import kotlinx.coroutines.launch
     //    enums = BuiltInTypeConverters.State.DISABLED
    // )
 )
-@Database(entities = [Player::class, Team::class, Match::class, TeamHistory::class], version = 6, exportSchema = false)
+@Database(entities = [Player::class, Team::class, Match::class], version = 6, exportSchema = false)
 abstract class PlayerRoomDatabase : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun teamDao(): TeamDao
     abstract fun matchDao(): MatchDao
-    abstract fun teamHistoryDao(): TeamHistoryDao
 
     companion object {
         @Volatile

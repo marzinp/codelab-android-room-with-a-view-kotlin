@@ -34,7 +34,9 @@ class PlayerRepository(private val playerDao: PlayerDao) {
     fun getPlayersSortedByNameDesc() = playerDao.getPlayersSortedByNameDesc()
     fun getPlayersSortedBySkillAsc() = playerDao.getPlayersSortedBySkillAsc()
     fun getPlayersSortedBySkillDesc() = playerDao.getPlayersSortedBySkillDesc()
-
+    suspend fun getPlayersByIds(playerIds: List<Int>): List<Player> {
+        return playerDao.getPlayersByIds(playerIds)
+    }
     // Get players marked as present
     fun getPresentPlayers(): Flow<List<Player>> {
         val presentPlayers = playerDao.getPresentPlayers()/* Your logic to get present players */
@@ -43,7 +45,7 @@ class PlayerRepository(private val playerDao: PlayerDao) {
     }
 
     // Update presence status
-    suspend fun updatePlayerPresence(playerId: Long, isPresent: Boolean) {
+    suspend fun updatePlayerPresence(playerId: Int, isPresent: Boolean) {
         playerDao.updatePlayerPresence(playerId, isPresent)
     }
     suspend fun setAllPlayersPresence(isPresent: Boolean) {
@@ -65,7 +67,7 @@ class PlayerRepository(private val playerDao: PlayerDao) {
         playerDao.addPlayer(player)
     }
 
-    suspend fun getPlayerById(player: Player): Long {
+    suspend fun getPlayerById(player: Player): Int {
         return player.id
     }
 }

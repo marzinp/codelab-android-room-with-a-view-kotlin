@@ -47,7 +47,7 @@ class PlayerViewModel @Inject constructor(private val repository: PlayerReposito
             SortOrder.BY_SKILL_DESC -> repository.getPlayersSortedBySkillDesc().asLiveData()
         }
     }
-    fun togglePlayerPresence(playerId: Long, isPresent: Boolean) {
+    fun togglePlayerPresence(playerId: Int, isPresent: Boolean) {
         viewModelScope.launch {
             repository.updatePlayerPresence(playerId, isPresent)
         }

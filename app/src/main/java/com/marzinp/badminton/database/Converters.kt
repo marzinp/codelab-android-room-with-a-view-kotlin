@@ -34,14 +34,15 @@ class Converters {
         val listType = object : TypeToken<List<Team>>() {}.type
         return gson.fromJson(teamsString, listType)
     }
+
     @TypeConverter
-    fun fromPlayerIdList(value: List<Int>): String {
-        return Gson().toJson(value)
+    fun fromPlayerIdList(playerIds: List<Int>): String {
+        return gson.toJson(playerIds)
     }
 
     @TypeConverter
-    fun toPlayerIdList(value: String): List<Int> {
+    fun toPlayerIdList(data: String): List<Int> {
         val listType = object : TypeToken<List<Int>>() {}.type
-        return Gson().fromJson(value, listType)
+        return gson.fromJson(data, listType)
     }
 }

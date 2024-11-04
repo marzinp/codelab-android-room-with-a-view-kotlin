@@ -35,6 +35,9 @@ interface PlayerDao {
     @Query("SELECT * FROM player_table WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): Player?
 
+    @Query("SELECT * FROM player_table WHERE id IN (:playerIds)")
+    suspend fun getPlayersByIds(playerIds: List<Int>): List<Player>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addPlayer(player: Player)
 
@@ -50,7 +53,7 @@ interface PlayerDao {
 
     // Update player's presence status
     @Query("UPDATE player_table SET isPresent = :isPresent WHERE id = :playerId")
-    suspend fun updatePlayerPresence(playerId: Long, isPresent: Boolean)
+    suspend fun updatePlayerPresence(playerId: Int, isPresent: Boolean)
 
     @Query("UPDATE player_table SET isPresent = :isPresent")
     suspend fun updateAllPlayersPresence(isPresent: Boolean)
