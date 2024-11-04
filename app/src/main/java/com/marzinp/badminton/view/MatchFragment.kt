@@ -24,6 +24,7 @@ import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayout
 import com.google.android.material.card.MaterialCardView
+import com.marzinp.badminton.UserSession
 import com.marzinp.badminton.viewmodel.MatchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -233,7 +234,7 @@ class MatchFragment : Fragment() {
                 setTypeface(null, Typeface.BOLD)
                 setPadding(0, 8, 0, 0)
             }
-            addView(skillSumView)
+            if (UserSession.isAdmin.value == true) {addView(skillSumView)}
         }
     }
 
