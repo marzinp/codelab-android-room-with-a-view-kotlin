@@ -6,13 +6,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marzinp.badminton.model.Player
-import com.marzinp.badminton.repository.PlayerRepository
 import com.marzinp.badminton.model.Team
+import com.marzinp.badminton.repository.PlayerRepository
 import com.marzinp.badminton.repository.TeamRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @HiltViewModel
 class MatchViewModel @Inject constructor(
@@ -20,19 +21,23 @@ class MatchViewModel @Inject constructor(
     private val teamRepository: TeamRepository,
 ) : ViewModel() {
 
-    // Ensemble pour stocker les combinaisons d'équipes précédentes
     private val _shuffledTeams = MutableLiveData<List<Team>>()
     val shuffledTeams: LiveData<List<Team>> get() = _shuffledTeams
 
     private val previousTeams: MutableSet<List<Int>> = mutableSetOf()
     private val previousOffTeam: MutableList<Int> = mutableListOf()
 
+    // Ensemble pour gérer la rotation des joueurs "off"
+    private val offRotationSet: MutableSet<Int> = mutableSetOf()
+
     suspend fun getPlayersForTeam(playerIds: List<Int>): List<Player> {
         return playerRepository.getPlayersByIds(playerIds)
     }
+
     fun shuffleTeams(numCourts: Int) {
         viewModelScope.launch {
-            val presentPlayers = playerRepository.getPresentPlayers().firstOrNull()?.shuffled() ?: emptyList()
+            val presentPlayers =
+                playerRepository.getPresentPlayers().firstOrNull()?.shuffled() ?: emptyList()
             if (presentPlayers.isEmpty()) {
                 Log.d("MatchViewModel", "No players are marked as present.")
                 return@launch
@@ -45,7 +50,7 @@ class MatchViewModel @Inject constructor(
             var bestOffTeam: List<Int> = emptyList()
             var minSkillDifference = Int.MAX_VALUE
 
-            // Calculer le nombre exact de joueurs nécessaires pour les courts et les "off"
+            // Calcul du nombre exact de joueurs pour les courts et pour les "off"
             val maxPlayersForCourts = numCourts * playersPerTeam * 2
             val requiredOffPlayers = presentPlayers.size - maxPlayersForCourts
 
@@ -58,47 +63,51 @@ class MatchViewModel @Inject constructor(
                 val shuffledPlayers = presentPlayers.shuffled()
                 val teams = mutableListOf<Team>()
 
-                // Assigner les joueurs pour les courts
+                // Prendre les joueurs pour les courts
                 val playersForCourts = shuffledPlayers.take(maxPlayersForCourts)
                 val remainingPlayers = shuffledPlayers.drop(maxPlayersForCourts)
 
-                // Former les équipes sur les courts
+                // Former les équipes de courts
                 for (i in playersForCourts.indices step playersPerTeam) {
-                    val teamPlayers = playersForCourts.slice(i until minOf(i + playersPerTeam, playersForCourts.size))
+                    val teamPlayers = playersForCourts.slice(
+                        i until minOf(
+                            i + playersPerTeam,
+                            playersForCourts.size
+                        )
+                    )
                     val playerIds = teamPlayers.map { it.id }
                     teams.add(Team(teamId = i / playersPerTeam, playerIds = playerIds))
                 }
 
-                // Former l'équipe Off avec le nombre exact requis de joueurs
-                var offTeam = remainingPlayers.map { it.id }
-                if (offTeam.size != requiredOffPlayers || offTeam.any { it in previousOffTeam }) {
-                    // Filtrer les joueurs "off" précédents et ajuster la taille pour correspondre exactement au nombre requis
-                    offTeam = remainingPlayers
-                        .filterNot { it.id in previousOffTeam }
-                        .map { it.id }
-                        .take(requiredOffPlayers)
+                // Sélection des joueurs "off" en respectant la rotation
+                var offTeam = remainingPlayers
+                    .filter { it.id !in offRotationSet }
+                    .map { it.id }
+                    .take(requiredOffPlayers)
 
-                    // Si le filtrage n'a pas abouti au nombre exact de joueurs, ajuster
-                    if (offTeam.size < requiredOffPlayers) {
-                        // Ajouter des joueurs restants pour atteindre le nombre requis
-                        offTeam += remainingPlayers
-                            .map { it.id }
-                            .filterNot { it in offTeam }
-                            .take(requiredOffPlayers - offTeam.size)
-                    } else if (offTeam.size > requiredOffPlayers) {
-                        // Réduire la taille de `offTeam` pour correspondre au nombre requis
-                        offTeam = offTeam.take(requiredOffPlayers)
-                    }
+                // Si le nombre de joueurs off est insuffisant, compléter avec ceux qui ont déjà été off
+                if (offTeam.size < requiredOffPlayers) {
+                    val additionalPlayers = remainingPlayers
+                        .map { it.id }
+                        .filter { it !in offTeam }
+                        .take(requiredOffPlayers - offTeam.size)
+                    offTeam = offTeam + additionalPlayers
                 }
 
-                // Calculer l'équilibre des compétences des équipes
+                // Mise à jour de la rotation des joueurs Off
+                offRotationSet.addAll(offTeam)
+                if (offRotationSet.size >= presentPlayers.size) {
+                    // Réinitialiser le cycle de rotation quand tous les joueurs sont passés en Off
+                    offRotationSet.clear()
+                }
+
+                // Calcul de l'équilibre des compétences
                 val teamSkills = teams.map { calculateTeamSkill(it.playerIds) }
                 val maxSkill = teamSkills.maxOrNull() ?: 0
                 val minSkill = teamSkills.minOrNull() ?: 0
                 val skillDifference = maxSkill - minSkill
 
                 if (skillDifference <= maxSkillDifference && offTeam.size == requiredOffPlayers) {
-                    // Ajouter l'équipe Off comme une équipe spéciale
                     _shuffledTeams.value = teams + Team(teamId = -1, playerIds = offTeam)
                     previousTeams.addAll(teams.map { it.playerIds.sorted() })
                     previousOffTeam.clear()
@@ -125,51 +134,18 @@ class MatchViewModel @Inject constructor(
         }
     }
 
-
     fun saveTeamsToHistory() {
         viewModelScope.launch {
-            // Limiter `previousTeams` à un maximum de 100 combinaisons
             if (previousTeams.size > 100) {
-                previousTeams.remove(previousTeams.first()) // Retire l'élément le plus ancien
+                previousTeams.remove(previousTeams.first()) // Limite l'historique des équipes
             }
-
-            // Enregistrer les équipes dans l'historique
             _shuffledTeams.value?.forEach { team ->
-                teamRepository.insertTeam(Team(playerIds = team.playerIds))
+                if (team.teamId != -1) { // Sauvegarder seulement les équipes normales, pas l'équipe Off
+                    teamRepository.insertTeam(Team(playerIds = team.playerIds))
+                }
             }
-
             Log.d("MatchViewModel", "Teams saved to Team table with limit of 500 records.")
         }
     }
-
-    /*fun shuffleTeams(numCourts: Int) {
-        viewModelScope.launch {
-            val presentPlayers =
-                playerRepository.getPresentPlayers().firstOrNull()?.shuffled() ?: emptyList()
-            Log.d("MatchViewModel", "Shuffled present players: $presentPlayers")
-
-            playerRepository.getPresentPlayers().collect { presentPlayers ->
-                val playersList = presentPlayers.toList()
-                if (playersList.isEmpty()) {
-                    Log.d("MatchViewModel", "No players are marked as present.")
-                    return@collect
-                }
-
-                val shuffledPlayers = playersList.shuffled()
-                val teams = mutableListOf<Team>()
-                val playersPerTeam = 2
-
-                for (i in shuffledPlayers.indices step playersPerTeam) {
-                    val teamPlayers = shuffledPlayers.slice(
-                        i until minOf(i + playersPerTeam, shuffledPlayers.size)
-                    )
-                    teams.add(Team(teamId = i / playersPerTeam, teamPlayers = teamPlayers))
-                }
-
-                _shuffledTeams.value = teams
-                Log.d("MatchViewModel", "shuffleTeams updated _shuffledTeams with: $teams")
-            }
-        }
-    }*/
 }
 
