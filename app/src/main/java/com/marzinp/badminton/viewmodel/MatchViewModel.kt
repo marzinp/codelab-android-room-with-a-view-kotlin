@@ -52,11 +52,7 @@ class MatchViewModel @Inject constructor(
 
             // Calcul du nombre exact de joueurs pour les courts et pour les "off"
             val maxPlayersForCourts = numCourts * playersPerTeam * 2
-            val requiredOffPlayers = if (presentPlayers.size > maxPlayersForCourts) {
-                presentPlayers.size - maxPlayersForCourts
-            } else {
-                0
-            }
+            val requiredOffPlayers = presentPlayers.size - maxPlayersForCourts
 
             suspend fun calculateTeamSkill(playerIds: List<Int>): Int {
                 val players = playerRepository.getPlayersByIds(playerIds)

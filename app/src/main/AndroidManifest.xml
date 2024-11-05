@@ -4,9 +4,9 @@
     <application
         android:name=".PlayersApplication"
         android:allowBackup="false"
-        android:icon="@drawable/badminton"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/badminton"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
