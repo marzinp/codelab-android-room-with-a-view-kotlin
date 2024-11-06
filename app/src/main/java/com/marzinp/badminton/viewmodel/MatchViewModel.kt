@@ -129,11 +129,25 @@ class MatchViewModel @Inject constructor(
             _shuffledTeams.value = bestTeams + Team(teamId = -1, playerIds = bestOffTeam)
             previousOffTeam.clear()
             previousOffTeam.addAll(bestOffTeam)
+
             Log.d("MatchViewModel", "Best attempt used with skill difference: $minSkillDifference.")
             saveTeamsToHistory()
         }
     }
 
+    private val _updateSuccess = MutableLiveData<Boolean>()
+    val updateSuccess: LiveData<Boolean> get() = _updateSuccess
+    fun incrementPlayersOffcount(offPlayerIds: List<Int>) {
+        viewModelScope.launch {
+            try {
+                playerRepository.incrementPlayersOffcount(offPlayerIds)
+                _updateSuccess.value = true // Set success status
+            } catch (e: Exception) {
+                _updateSuccess.value = false // Set failure status
+                Log.e("MatchViewModel", "Error updating off count", e)
+            }
+        }
+    }
     fun saveTeamsToHistory() {
         viewModelScope.launch {
             if (previousTeams.size > 100) {
@@ -143,7 +157,7 @@ class MatchViewModel @Inject constructor(
                 if (team.teamId != -1) { // Sauvegarder seulement les équipes normales, pas l'équipe Off
                     teamRepository.insertTeam(Team(playerIds = team.playerIds))
                 }
-            }
+                           }
             Log.d("MatchViewModel", "Teams saved to Team table with limit of 500 records.")
         }
     }

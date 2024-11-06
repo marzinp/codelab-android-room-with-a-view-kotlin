@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.text.set
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -28,8 +29,8 @@ class PlayerFragment : Fragment() {
     private var _binding: FragmentPlayerBinding? = null
     private val binding get() = _binding!!
 
-    private val matchViewModel: MatchViewModel by viewModels ()
-    private val playerViewModel: PlayerViewModel by viewModels ()
+    private val matchViewModel: MatchViewModel by viewModels()
+    private val playerViewModel: PlayerViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -58,21 +59,32 @@ class PlayerFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        lifecycleScope.launch {
+        // Use viewLifecycleOwner.lifecycleScope for coroutine collection
+        viewLifecycleOwner.lifecycleScope.launch {
             playerViewModel.allPlayers.collect { players ->
-                binding.checkBoxPresent.setOnCheckedChangeListener(null)
-                binding.checkBoxPresent.isChecked = players.all { it.isPresent }
-                binding.checkBoxPresent.setOnCheckedChangeListener { _, isChecked ->
-                    playerViewModel.setAllPlayersPresent(isChecked)
+                binding?.let { safeBinding ->
+                    if(safeBinding.editTextNumCourts.text.isEmpty())safeBinding.editTextNumCourts.setText("3")
+                    safeBinding.checkBoxPresent.setOnCheckedChangeListener(null)
+                    safeBinding.checkBoxPresent.isChecked = players.all { it.isPresent }
+                    safeBinding.checkBoxPresent.setOnCheckedChangeListener { _, isChecked ->
+                        playerViewModel.setAllPlayersPresent(isChecked)
+                    }
                 }
             }
         }
 
         binding.buttonShufflePlayer.setOnClickListener {
-            val numCourts = binding.editTextNumCourts.text.toString().toIntOrNull() ?: 3
-            val bundle = Bundle().apply { putInt("numCourts", numCourts) }
-            findNavController().navigate(R.id.action_playerFragment_to_matchFragment, bundle)
-            matchViewModel.shuffleTeams(numCourts)
+            binding?.let { safeBinding ->
+                val numCourts = safeBinding.editTextNumCourts.text.toString().toIntOrNull() ?: 3
+                val bundle = Bundle().apply { putInt("numCourts", numCourts) }
+                findNavController().navigate(R.id.action_playerFragment_to_matchFragment, bundle)
+                matchViewModel.shuffleTeams(numCourts)
+            }
+        }
+
+        binding.buttonResetOffCount.setOnClickListener {
+            playerViewModel.resetOffCountForAllPlayers()
+            Toast.makeText(requireContext(), "Off count reset for all players", Toast.LENGTH_SHORT).show()
         }
 
         playerViewModel.players.observe(viewLifecycleOwner) { players ->
@@ -104,36 +116,31 @@ class PlayerFragment : Fragment() {
             Toast.makeText(context, "Admin permissions required", Toast.LENGTH_SHORT).show()
         }
     }
+
     private fun showPlayerOptionsDialog(player: Player?) {
         if (UserSession.isAdmin.value == true) {
             val builder = AlertDialog.Builder(requireContext())
             builder.setTitle(if (player == null) "Add Player" else "Edit Player")
 
-            // Inflate the dialog layout and set up the fields
             val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_player, null)
             builder.setView(dialogView)
 
-            // Get references to the input fields in dialog_player layout
             val nameInput = dialogView.findViewById<EditText>(R.id.editTextPlayerName)
             val skillInput = dialogView.findViewById<EditText>(R.id.editTextPlayerSkill)
 
             if (player != null) {
-                // Pre-fill the fields with player data if editing
                 nameInput.setText(player.name)
                 skillInput.setText(player.skill.toString())
             }
 
-            // Set up the dialog buttons
             builder.setPositiveButton(if (player == null) "Add" else "Update") { _, _ ->
                 val name = nameInput.text.toString()
                 val skill = skillInput.text.toString().toIntOrNull() ?: 0
 
                 if (player == null) {
-                    // Add new player logic
                     val newPlayer = Player(name = name, skill = skill, isPresent = true)
                     playerViewModel.addPlayer(newPlayer)
                 } else {
-                    // Update existing player logic
                     val updatedPlayer = player.copy(name = name, skill = skill)
                     playerViewModel.updatePlayer(updatedPlayer)
                 }
@@ -151,7 +158,7 @@ class PlayerFragment : Fragment() {
             .setTitle("Delete ${player.name}?")
             .setMessage("Are you sure you want to delete this player?")
             .setPositiveButton("Delete") { _, _ ->
-                playerViewModel.deletePlayer(player) // Assuming deletePlayer is defined in your ViewModel
+                playerViewModel.deletePlayer(player)
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -159,8 +166,11 @@ class PlayerFragment : Fragment() {
 
     private fun updateVisibility(isAdmin: Boolean) {
         Log.d("PlayerFragment", "Admin status updated: $isAdmin")
-        binding.fabAddPlayer.visibility = if (isAdmin) View.VISIBLE else View.GONE
-        (binding.recyclerviewPlayer.adapter as? PlayerListAdapter)?.setAdminVisibility(isAdmin)
+        binding?.let { safeBinding ->
+            safeBinding.fabAddPlayer.visibility = if (isAdmin) View.VISIBLE else View.GONE
+            safeBinding.buttonResetOffCount.visibility= if (isAdmin) View.VISIBLE else View.GONE
+            (safeBinding.recyclerviewPlayer.adapter as? PlayerListAdapter)?.setAdminVisibility(isAdmin)
+        }
     }
 
     override fun onDestroyView() {

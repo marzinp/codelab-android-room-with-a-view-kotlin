@@ -10,20 +10,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.getColor
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.marzinp.badminton.R
-import com.marzinp.badminton.model.Player
-import com.marzinp.badminton.model.Team
-import com.marzinp.badminton.databinding.FragmentMatchBinding
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayout
 import com.google.android.material.card.MaterialCardView
+import com.marzinp.badminton.R
+import com.marzinp.badminton.databinding.FragmentMatchBinding
+import com.marzinp.badminton.model.Player
+import com.marzinp.badminton.model.Team
 import com.marzinp.badminton.viewmodel.MatchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -36,8 +37,7 @@ class MatchFragment : Fragment() {
 
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         Log.d("MatchFragment", "onCreateView called")
         setHasOptionsMenu(true)  // Notify that this fragment has an options menu
@@ -61,10 +61,26 @@ class MatchFragment : Fragment() {
 
         // Perform initial shuffle to populate `shuffledTeams` with data
         matchViewModel.shuffleTeams(numCourts)
+        matchViewModel.updateSuccess.observe(viewLifecycleOwner) { success ->
+            if (success) {
+                Log.d("MatchFragment", "Off count incremented successfully")
+            } else {
+                Log.e("MatchFragment", "Failed to increment off count")
+            }
+        }
+        matchViewModel.updateSuccess.observe(viewLifecycleOwner) { isSuccess ->
+            if (!isSuccess) {
+                Toast.makeText(requireContext(), "Failed to update off count", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
+
     private fun setupShuffleButton(numCourts: Int) {
-        binding.buttonShuffleMatch.setOnClickListener {
-            matchViewModel.shuffleTeams(numCourts) // Trigger the shuffle in ViewModel
+        binding?.let { safeBinding ->
+            // Utilisation sécurisée de safeBinding
+            binding.buttonShuffleMatch.setOnClickListener {
+                matchViewModel.shuffleTeams(numCourts) // Trigger the shuffle in ViewModel
+            }
         }
     }
 
@@ -78,8 +94,9 @@ class MatchFragment : Fragment() {
 
     private fun displayCourtsAndOffPlayers(teams: List<Team>, numCourts: Int) {
         Log.d("MatchFragment", "Requested to display $numCourts courts with teams: $teams")
-        binding.courtsContainer.removeAllViews()
-
+        binding?.let { safeBinding ->
+            binding.courtsContainer.removeAllViews()
+        }
         val playersPerCourt = 4
         var maxPlayersForCourts = numCourts * playersPerCourt
         val allPlayerIds = teams.flatMap { it.playerIds }
@@ -92,74 +109,86 @@ class MatchFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             // Boucle pour chaque court avec les joueurs récupérés
-            playersForCourtsIds.chunked(playersPerCourt).take(numCourts).forEachIndexed { index, courtPlayerIds ->
-                Log.d("MatchFragment", "Creating view for court $index with players: $courtPlayerIds")
+            playersForCourtsIds.chunked(playersPerCourt).take(numCourts)
+                .forEachIndexed { index, courtPlayerIds ->
+                    Log.d(
+                        "MatchFragment",
+                        "Creating view for court $index with players: $courtPlayerIds"
+                    )
 
-                val courtContainer = LinearLayout(requireContext()).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        setMargins(0, 16, 0, 16) // Espace entre les courts
+                    val courtContainer = LinearLayout(requireContext()).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            setMargins(0, 16, 0, 16) // Espace entre les courts
+                        }
                     }
+
+                    val team1PlayerIds: List<Int>
+                    val team2PlayerIds: List<Int>
+
+                    when (courtPlayerIds.size) {
+                        4 -> {
+                            team1PlayerIds = courtPlayerIds.take(2)
+                            team2PlayerIds = courtPlayerIds.takeLast(2)
+                        }
+
+                        3 -> {
+                            team1PlayerIds = courtPlayerIds.take(1)
+                            team2PlayerIds = courtPlayerIds.drop(1).take(1)
+                            offPlayerIds += courtPlayerIds.last()
+                        }
+
+                        2 -> {
+                            team1PlayerIds = courtPlayerIds.take(1)
+                            team2PlayerIds = courtPlayerIds.drop(1).take(1)
+                        }
+
+                        1 -> {
+                            offPlayerIds += courtPlayerIds.first()
+                            Log.d(
+                                "MatchFragment", "Skipping court $index as it has only one player."
+                            )
+                            return@forEachIndexed // Passer ce court s'il n'y a qu'un joueur
+                        }
+
+                        else -> {
+                            team1PlayerIds = emptyList()
+                            team2PlayerIds = emptyList()
+                        }
+                    }
+
+                    // Récupérer les joueurs pour les deux équipes de chaque court
+                    val team1Players = matchViewModel.getPlayersForTeam(team1PlayerIds)
+                    val team2Players = matchViewModel.getPlayersForTeam(team2PlayerIds)
+
+                    Log.d("MatchFragment", "Team 1 for court $index: $team1Players")
+                    Log.d("MatchFragment", "Team 2 for court $index: $team2Players")
+
+                    val team1Container = createTeamCard(team1Players, R.color.team1)
+                    val team2Container = createTeamCard(team2Players, R.color.team2)
+
+                    courtContainer.addView(team1Container)
+                    courtContainer.addView(team2Container)
+
+                    // Ajouter le court au conteneur principal
+                    binding?.let { safeBinding ->
+                        binding.courtsContainer.addView(courtContainer)
+                    }
+                    Log.d("MatchFragment", "Court $index added to courtsContainer.")
                 }
-
-                val team1PlayerIds: List<Int>
-                val team2PlayerIds: List<Int>
-
-                when (courtPlayerIds.size) {
-                    4 -> {
-                        team1PlayerIds = courtPlayerIds.take(2)
-                        team2PlayerIds = courtPlayerIds.takeLast(2)
-                    }
-                    3 -> {
-                        team1PlayerIds = courtPlayerIds.take(1)
-                        team2PlayerIds = courtPlayerIds.drop(1).take(1)
-                        offPlayerIds += courtPlayerIds.last()
-                    }
-                    2 -> {
-                        team1PlayerIds = courtPlayerIds.take(1)
-                        team2PlayerIds = courtPlayerIds.drop(1).take(1)
-                    }
-                    1 -> {
-                        offPlayerIds += courtPlayerIds.first()
-                        Log.d("MatchFragment", "Skipping court $index as it has only one player.")
-                        return@forEachIndexed // Passer ce court s'il n'y a qu'un joueur
-                    }
-                    else -> {
-                        team1PlayerIds = emptyList()
-                        team2PlayerIds = emptyList()
-                    }
-                }
-
-                // Récupérer les joueurs pour les deux équipes de chaque court
-                val team1Players = matchViewModel.getPlayersForTeam(team1PlayerIds)
-                val team2Players = matchViewModel.getPlayersForTeam(team2PlayerIds)
-
-                Log.d("MatchFragment", "Team 1 for court $index: $team1Players")
-                Log.d("MatchFragment", "Team 2 for court $index: $team2Players")
-
-                val team1Container = createTeamCard(team1Players, R.color.team1)
-                val team2Container = createTeamCard(team2Players, R.color.team2)
-
-                courtContainer.addView(team1Container)
-                courtContainer.addView(team2Container)
-
-                // Ajouter le court au conteneur principal
-                binding.courtsContainer.addView(courtContainer)
-                Log.d("MatchFragment", "Court $index added to courtsContainer.")
-            }
 
             // Afficher les joueurs "off" après tous les courts
             val offPlayers = matchViewModel.getPlayersForTeam(offPlayerIds)
             if (offPlayers.isNotEmpty()) {
+                // Increment off count for these players
+                matchViewModel.incrementPlayersOffcount(offPlayerIds)
                 displayOffPlayers(offPlayers)
                 Log.d("MatchFragment", "Off players displayed after courts.")
             }
         }
     }
-
 
 
     // Helper to create team cards
@@ -182,18 +211,18 @@ class MatchFragment : Fragment() {
             textSize = 18f
             setTypeface(null, Typeface.BOLD)
             layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
-        binding.courtsContainer.addView(offPlayersTitle)
+        binding?.let { safeBinding ->
+            binding.courtsContainer.addView(offPlayersTitle)
+        }
 
         val offPlayersLayout = FlexboxLayout(requireContext()).apply {
             flexDirection = FlexDirection.ROW
             flexWrap = FlexWrap.WRAP
             layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
 
@@ -205,11 +234,16 @@ class MatchFragment : Fragment() {
             }
             offPlayersLayout.addView(playerView)
         }
-        binding.courtsContainer.addView(offPlayersLayout)
+        binding?.let { safeBinding ->
+            binding.courtsContainer.addView(offPlayersLayout)
+        }
+
         Log.d("MatchFragment", "Added layout for OffPlayers with ${offPlayers.size} players.")
     }
 
-    private fun createTeamView(players: List<Player>, colorRes: Int, skillSumText: String): LinearLayout {
+    private fun createTeamView(
+        players: List<Player>, colorRes: Int, skillSumText: String
+    ): LinearLayout {
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
 
@@ -238,10 +272,6 @@ class MatchFragment : Fragment() {
     }
 
 
-
-
-
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
@@ -256,5 +286,6 @@ class MatchFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        _binding = null
     }
 }

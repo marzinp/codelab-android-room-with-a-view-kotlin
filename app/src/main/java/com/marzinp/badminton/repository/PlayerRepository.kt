@@ -51,6 +51,14 @@ class PlayerRepository(private val playerDao: PlayerDao) {
     suspend fun setAllPlayersPresence(isPresent: Boolean) {
         playerDao.updateAllPlayersPresence(isPresent)
     }
+    suspend fun incrementPlayersOffcount(playerIds:List<Int>){
+        playerDao.incrementOffCountForPlayers(playerIds)
+    }
+
+    suspend fun resetOffCountForAllPlayers() {
+        playerDao.resetOffCountForAllPlayers()
+    }
+
     suspend fun updatePlayer(player: Player) {
         playerDao.update(player) // Requires an @Update function in PlayerDao
     }

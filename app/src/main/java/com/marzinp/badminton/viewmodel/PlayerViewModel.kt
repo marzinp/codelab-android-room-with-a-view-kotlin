@@ -35,21 +35,21 @@ import javax.inject.Inject
  * an up-to-date list of all players.
  */
 @HiltViewModel
-class PlayerViewModel @Inject constructor(private val repository: PlayerRepository) : ViewModel() {
-    val allPlayers: Flow<List<Player>> =repository.allPlayers
+class PlayerViewModel @Inject constructor(private val playerRepository: PlayerRepository) : ViewModel() {
+    val allPlayers: Flow<List<Player>> =playerRepository.allPlayers
     // Holds the current sort order
     private val _currentSortOrder = MutableLiveData(SortOrder.BY_SKILL_ASC)
     val players: LiveData<List<Player>> = _currentSortOrder.switchMap { sortOrder ->
         when (sortOrder) {
-            SortOrder.BY_NAME_ASC -> repository.getPlayersSortedByNameAsc().asLiveData()
-            SortOrder.BY_NAME_DESC -> repository.getPlayersSortedByNameDesc().asLiveData()
-            SortOrder.BY_SKILL_ASC -> repository.getPlayersSortedBySkillAsc().asLiveData()
-            SortOrder.BY_SKILL_DESC -> repository.getPlayersSortedBySkillDesc().asLiveData()
+            SortOrder.BY_NAME_ASC -> playerRepository.getPlayersSortedByNameAsc().asLiveData()
+            SortOrder.BY_NAME_DESC -> playerRepository.getPlayersSortedByNameDesc().asLiveData()
+            SortOrder.BY_SKILL_ASC -> playerRepository.getPlayersSortedBySkillAsc().asLiveData()
+            SortOrder.BY_SKILL_DESC -> playerRepository.getPlayersSortedBySkillDesc().asLiveData()
         }
     }
     fun togglePlayerPresence(playerId: Int, isPresent: Boolean) {
         viewModelScope.launch {
-            repository.updatePlayerPresence(playerId, isPresent)
+            playerRepository.updatePlayerPresence(playerId, isPresent)
         }
     }
     private val _updatingAllPlayers = MutableLiveData(false)
@@ -63,7 +63,7 @@ class PlayerViewModel @Inject constructor(private val repository: PlayerReposito
 
             players.forEach { player ->
                 if (player.isPresent != isChecked) {  // Update only if needed
-                    repository.updatePlayerPresence(player.id, isChecked)
+                    playerRepository.updatePlayerPresence(player.id, isChecked)
                 }
             }
         }
@@ -79,18 +79,23 @@ class PlayerViewModel @Inject constructor(private val repository: PlayerReposito
     }
     fun updatePlayer(player: Player) {
         viewModelScope.launch {
-            repository.updatePlayer(player) // Ensure this method exists in PlayerRepository
+            playerRepository.updatePlayer(player) // Ensure this method exists in PlayerRepository
         }
     }
 
     fun deletePlayer(player: Player) {
         viewModelScope.launch {
-            repository.deletePlayer(player) // Ensure this method exists in PlayerRepository
+            playerRepository.deletePlayer(player) // Ensure this method exists in PlayerRepository
         }
     }
     fun addPlayer(player: Player) {
         viewModelScope.launch {
-            repository.addPlayer(player) // Ensure this method exists in PlayerRepository
+            playerRepository.addPlayer(player) // Ensure this method exists in PlayerRepository
+        }
+    }
+    fun resetOffCountForAllPlayers() {
+        viewModelScope.launch {
+            playerRepository.resetOffCountForAllPlayers()
         }
     }
 

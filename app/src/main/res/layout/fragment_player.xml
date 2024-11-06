@@ -92,24 +92,33 @@
         app:layout_constraintTop_toBottomOf="@id/recyclerviewPlayer"
         app:layout_constraintBottom_toBottomOf="parent">
 
+        <Button
+            android:id="@+id/buttonResetOffCount"
+            android:layout_width="124dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            android:text="Reset Off Count" />
+
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="0.5"
-            android:text="Number of Courts:" />
+            android:gravity="center_horizontal|center_vertical"
+            android:text="Number \nof Courts:"
+            android:textAlignment="center" />
 
         <EditText
             android:id="@+id/editTextNumCourts"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="0.5"
-            android:hint="Enter courts"
+            android:hint=""
             android:inputType="number" />
 
         <Button
             android:id="@+id/buttonShufflePlayer"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="0.5"
             android:text="Shuffle" />
 

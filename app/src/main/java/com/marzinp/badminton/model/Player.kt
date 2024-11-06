@@ -25,6 +25,6 @@ data class Player(
     @PrimaryKey(autoGenerate = true) val id: Int=0,
     val name: String,
     val skill: Int,
-    val isPresent: Boolean=false
-
+    val isPresent: Boolean=false,
+    val offcount:Int=0
 )

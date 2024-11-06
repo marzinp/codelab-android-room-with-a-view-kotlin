@@ -15,7 +15,7 @@ interface PlayerDao {
     // data has changed.
 
     @Query("SELECT * FROM player_table")
-    fun getAllPlayers():Flow<List<Player>>
+    fun getAllPlayers(): Flow<List<Player>>
 
     @Query("SELECT * FROM player_table ORDER BY name ASC")
     fun getPlayersSortedByNameAsc(): Flow<List<Player>>
@@ -45,11 +45,17 @@ interface PlayerDao {
     suspend fun deleteAllPlayers()
 
     @Query("DELETE FROM player_table WHERE name = :name")
-    suspend fun deletePlayerByName(name:String)
+    suspend fun deletePlayerByName(name: String)
 
     // Get all players marked as present
     @Query("SELECT * FROM player_table WHERE isPresent = 1")
     fun getPresentPlayers(): Flow<List<Player>>
+
+    @Query("UPDATE player_table SET offCount = offCount + 1 WHERE id IN (:playerIds)")
+    suspend fun incrementOffCountForPlayers(playerIds: List<Int>)
+
+    @Query("UPDATE player_table SET offCount = 0")
+    suspend fun resetOffCountForAllPlayers()
 
     // Update player's presence status
     @Query("UPDATE player_table SET isPresent = :isPresent WHERE id = :playerId")

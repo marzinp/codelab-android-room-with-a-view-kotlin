@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
     //    enums = BuiltInTypeConverters.State.DISABLED
    // )
 )
-@Database(entities = [Player::class, Team::class, Match::class], version = 6, exportSchema = false)
+@Database(entities = [Player::class, Team::class, Match::class], version = 7, exportSchema = false)
 abstract class PlayerRoomDatabase : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun teamDao(): TeamDao
