@@ -22,6 +22,7 @@ import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayout
 import com.google.android.material.card.MaterialCardView
 import com.marzinp.badminton.R
+import com.marzinp.badminton.UserSession
 import com.marzinp.badminton.databinding.FragmentMatchBinding
 import com.marzinp.badminton.model.Player
 import com.marzinp.badminton.model.Team
@@ -59,8 +60,8 @@ class MatchFragment : Fragment() {
             displayCourtsAndOffPlayers(teams, numCourts)
         }
 
-        // Perform initial shuffle to populate `shuffledTeams` with data
         matchViewModel.shuffleTeams(numCourts)
+
         matchViewModel.updateSuccess.observe(viewLifecycleOwner) { success ->
             if (success) {
                 Log.d("MatchFragment", "Off count incremented successfully")
@@ -70,7 +71,8 @@ class MatchFragment : Fragment() {
         }
         matchViewModel.updateSuccess.observe(viewLifecycleOwner) { isSuccess ->
             if (!isSuccess) {
-                Toast.makeText(requireContext(), "Failed to update off count", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Failed to update off count", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }
@@ -79,17 +81,11 @@ class MatchFragment : Fragment() {
         binding.let { safeBinding ->
             // Utilisation sécurisée de safeBinding
             binding.buttonShuffleMatch.setOnClickListener {
+                matchViewModel.setTeamsShuffled(false)
                 matchViewModel.shuffleTeams(numCourts) // Trigger the shuffle in ViewModel
+
             }
         }
-    }
-
-    private fun extractOffPlayers(teams: List<Team>, numCourts: Int): List<Int> {
-        val playersPerCourt = 4
-        val totalPlayers = teams.flatMap { it.playerIds }
-        val offPlayers = totalPlayers.drop(numCourts * playersPerCourt)
-        Log.d("MatchFragment", "Calculated off players: $offPlayers")
-        return offPlayers
     }
 
     private fun displayCourtsAndOffPlayers(teams: List<Team>, numCourts: Int) {
@@ -207,7 +203,7 @@ class MatchFragment : Fragment() {
     // Helper to display off players
     private fun displayOffPlayers(offPlayers: List<Player>) {
         val offPlayersTitle = TextView(requireContext()).apply {
-            text = context.getString(R.string.off_players)+":"
+            text = context.getString(R.string.off_players) + ":"
             textSize = 18f
             setTypeface(null, Typeface.BOLD)
             layoutParams = ViewGroup.LayoutParams(
@@ -267,7 +263,7 @@ class MatchFragment : Fragment() {
                 setTypeface(null, Typeface.BOLD)
                 setPadding(0, 8, 0, 0)
             }
-            addView(skillSumView)
+            if(UserSession.isAdmin.value==true)addView(skillSumView)
         }
     }
 

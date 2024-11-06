@@ -13,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.min
 
 
 @HiltViewModel
@@ -26,15 +27,22 @@ class MatchViewModel @Inject constructor(
 
     private val previousTeams: MutableSet<List<Int>> = mutableSetOf()
     private val previousOffTeam: MutableList<Int> = mutableListOf()
+    private var teamsShuffled = false // Flag to track shuffle state
 
-    // Ensemble pour gérer la rotation des joueurs "off"
-    private val offRotationSet: MutableSet<Int> = mutableSetOf()
+    fun isTeamsShuffled(): Boolean = teamsShuffled
 
+    fun setTeamsShuffled(value: Boolean) {
+        teamsShuffled = value
+    }
     suspend fun getPlayersForTeam(playerIds: List<Int>): List<Player> {
         return playerRepository.getPlayersByIds(playerIds)
     }
 
     fun shuffleTeams(numCourts: Int) {
+        if (isTeamsShuffled()) {
+            Log.d("MatchViewModel","Teams already shuffled")
+            return
+        } // Exit if already shuffled
         viewModelScope.launch {
             val presentPlayers = playerRepository.getPresentPlayers()
                 .firstOrNull()?.sortedByDescending { it.offcount } ?: emptyList()
@@ -51,8 +59,9 @@ class MatchViewModel @Inject constructor(
 
             val playersPerTeam = 2
             val playersPerCourt = 2*playersPerTeam
-            val playersForCourts = randomizedPresentPlayers.take(numCourts * playersPerCourt)
-            val offPlayers = randomizedPresentPlayers.drop(numCourts * playersPerCourt)
+            var actualNumCourts= min(presentPlayers.size/playersPerCourt,numCourts)
+            val playersForCourts = randomizedPresentPlayers.take(actualNumCourts * playersPerCourt)
+            val offPlayers = randomizedPresentPlayers.drop(actualNumCourts * playersPerCourt).shuffled()
 
             val maxSkillDifference = 2
             val maxAttempts = 10
@@ -67,7 +76,7 @@ class MatchViewModel @Inject constructor(
                 return@launch
             }
 
-            val maxPlayersForCourts = numCourts * playersPerTeam * 2
+            val maxPlayersForCourts = actualNumCourts * playersPerTeam * 2
             val requiredOffPlayers = maxOf(0, presentPlayers.size - maxPlayersForCourts)
 
             suspend fun calculateTeamSkill(playerIds: List<Int>): Int {
@@ -102,15 +111,16 @@ class MatchViewModel @Inject constructor(
                     bestOffTeam = offTeam
                 }
             }
-
+            setTeamsShuffled (true)  // Set flag to true after shuffling
             // Use the best attempt if no perfect balance was found
             _shuffledTeams.value = bestTeams + Team(teamId = -1, playerIds = bestOffTeam)
             saveTeamsToHistory()
         }
     }
 
-
-
+    fun resetShuffle() {
+        teamsShuffled = false // Reset flag when needed (e.g., before a new shuffle)
+    }
 
     private val _updateSuccess = MutableLiveData<Boolean>()
     val updateSuccess: LiveData<Boolean> get() = _updateSuccess

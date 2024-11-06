@@ -41,7 +41,7 @@ class PlayerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        matchViewModel.resetShuffle() // Reset the shuffle state
         val recyclerView = binding.recyclerviewPlayer
         val adapter = PlayerListAdapter(
             playerViewModel = playerViewModel,
