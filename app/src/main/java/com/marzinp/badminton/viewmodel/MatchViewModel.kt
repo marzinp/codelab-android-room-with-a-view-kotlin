@@ -36,30 +36,39 @@ class MatchViewModel @Inject constructor(
 
     fun shuffleTeams(numCourts: Int) {
         viewModelScope.launch {
-// Fetch players and sort by `offcount` in descending order
             val presentPlayers = playerRepository.getPresentPlayers()
                 .firstOrNull()?.sortedByDescending { it.offcount } ?: emptyList()
 
             if (presentPlayers.isEmpty()) {
                 Log.d("MatchViewModel", "No players are marked as present.")
+                _shuffledTeams.value = emptyList()
                 return@launch
             }
 
-            val playersPerCourt = 4
-            val playersForCourts = presentPlayers.take(numCourts * playersPerCourt) // Highest offcount players prioritized
-            val offPlayers = presentPlayers.drop(numCourts * playersPerCourt) // Remaining players
+            // Shuffle within each offcount level to randomize order of players with the same offcount
+            val randomizedPresentPlayers = presentPlayers.groupBy { it.offcount }
+                .flatMap { (_, players) -> players.shuffled() }
 
+            val playersPerTeam = 2
+            val playersPerCourt = 2*playersPerTeam
+            val playersForCourts = randomizedPresentPlayers.take(numCourts * playersPerCourt)
+            val offPlayers = randomizedPresentPlayers.drop(numCourts * playersPerCourt)
 
             val maxSkillDifference = 2
-            val playersPerTeam = 2
             val maxAttempts = 10
             var bestTeams: List<Team> = emptyList()
             var bestOffTeam: List<Int> = emptyList()
             var minSkillDifference = Int.MAX_VALUE
 
-            // Calculate the exact number of players for courts and off-players
+            // Adjust to handle fewer players than required for full courts
+            if (presentPlayers.size < playersPerCourt) {
+                // Create a single "court" with all present players if fewer than 4 players are available
+                _shuffledTeams.value = listOf(Team(teamId = 0, playerIds = presentPlayers.map { it.id }))
+                return@launch
+            }
+
             val maxPlayersForCourts = numCourts * playersPerTeam * 2
-            val requiredOffPlayers = presentPlayers.size - maxPlayersForCourts
+            val requiredOffPlayers = maxOf(0, presentPlayers.size - maxPlayersForCourts)
 
             suspend fun calculateTeamSkill(playerIds: List<Int>): Int {
                 val players = playerRepository.getPlayersByIds(playerIds)
@@ -70,13 +79,11 @@ class MatchViewModel @Inject constructor(
                 val shuffledPlayers = playersForCourts.shuffled()
                 val teams = mutableListOf<Team>()
 
-                // Form court teams with the highest offcount players
                 for (i in shuffledPlayers.indices step playersPerTeam) {
                     val teamPlayers = shuffledPlayers.slice(i until minOf(i + playersPerTeam, shuffledPlayers.size))
                     teams.add(Team(teamId = i / playersPerTeam, playerIds = teamPlayers.map { it.id }))
                 }
 
-                // Form the off-team
                 val offTeam = offPlayers.take(requiredOffPlayers).map { it.id }
                 val teamSkills = teams.map { calculateTeamSkill(it.playerIds) }
                 val maxSkill = teamSkills.maxOrNull() ?: 0
@@ -101,6 +108,8 @@ class MatchViewModel @Inject constructor(
             saveTeamsToHistory()
         }
     }
+
+
 
 
     private val _updateSuccess = MutableLiveData<Boolean>()
