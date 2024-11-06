@@ -26,7 +26,6 @@ class MatchViewModel @Inject constructor(
     val shuffledTeams: LiveData<List<Team>> get() = _shuffledTeams
 
     private val previousTeams: MutableSet<List<Int>> = mutableSetOf()
-    private val previousOffTeam: MutableList<Int> = mutableListOf()
     private var teamsShuffled = false // Flag to track shuffle state
 
     fun isTeamsShuffled(): Boolean = teamsShuffled
@@ -59,7 +58,7 @@ class MatchViewModel @Inject constructor(
 
             val playersPerTeam = 2
             val playersPerCourt = 2*playersPerTeam
-            var actualNumCourts= min(presentPlayers.size/playersPerCourt,numCourts)
+            val actualNumCourts= min(presentPlayers.size/playersPerCourt,numCourts)
             val playersForCourts = randomizedPresentPlayers.take(actualNumCourts * playersPerCourt)
             val offPlayers = randomizedPresentPlayers.drop(actualNumCourts * playersPerCourt).shuffled()
 
