@@ -36,12 +36,19 @@ class MatchViewModel @Inject constructor(
 
     fun shuffleTeams(numCourts: Int) {
         viewModelScope.launch {
-            val presentPlayers =
-                playerRepository.getPresentPlayers().firstOrNull()?.shuffled() ?: emptyList()
+// Fetch players and sort by `offcount` in descending order
+            val presentPlayers = playerRepository.getPresentPlayers()
+                .firstOrNull()?.sortedByDescending { it.offcount } ?: emptyList()
+
             if (presentPlayers.isEmpty()) {
                 Log.d("MatchViewModel", "No players are marked as present.")
                 return@launch
             }
+
+            val playersPerCourt = 4
+            val playersForCourts = presentPlayers.take(numCourts * playersPerCourt) // Highest offcount players prioritized
+            val offPlayers = presentPlayers.drop(numCourts * playersPerCourt) // Remaining players
+
 
             val maxSkillDifference = 2
             val playersPerTeam = 2
@@ -50,7 +57,7 @@ class MatchViewModel @Inject constructor(
             var bestOffTeam: List<Int> = emptyList()
             var minSkillDifference = Int.MAX_VALUE
 
-            // Calcul du nombre exact de joueurs pour les courts et pour les "off"
+            // Calculate the exact number of players for courts and off-players
             val maxPlayersForCourts = numCourts * playersPerTeam * 2
             val requiredOffPlayers = presentPlayers.size - maxPlayersForCourts
 
@@ -60,48 +67,17 @@ class MatchViewModel @Inject constructor(
             }
 
             repeat(maxAttempts) {
-                val shuffledPlayers = presentPlayers.shuffled()
+                val shuffledPlayers = playersForCourts.shuffled()
                 val teams = mutableListOf<Team>()
 
-                // Prendre les joueurs pour les courts
-                val playersForCourts = shuffledPlayers.take(maxPlayersForCourts)
-                val remainingPlayers = shuffledPlayers.drop(maxPlayersForCourts)
-
-                // Former les équipes de courts
-                for (i in playersForCourts.indices step playersPerTeam) {
-                    val teamPlayers = playersForCourts.slice(
-                        i until minOf(
-                            i + playersPerTeam,
-                            playersForCourts.size
-                        )
-                    )
-                    val playerIds = teamPlayers.map { it.id }
-                    teams.add(Team(teamId = i / playersPerTeam, playerIds = playerIds))
+                // Form court teams with the highest offcount players
+                for (i in shuffledPlayers.indices step playersPerTeam) {
+                    val teamPlayers = shuffledPlayers.slice(i until minOf(i + playersPerTeam, shuffledPlayers.size))
+                    teams.add(Team(teamId = i / playersPerTeam, playerIds = teamPlayers.map { it.id }))
                 }
 
-                // Sélection des joueurs "off" en respectant la rotation
-                var offTeam = remainingPlayers
-                    .filter { it.id !in offRotationSet }
-                    .map { it.id }
-                    .take(requiredOffPlayers)
-
-                // Si le nombre de joueurs off est insuffisant, compléter avec ceux qui ont déjà été off
-                if (offTeam.size < requiredOffPlayers) {
-                    val additionalPlayers = remainingPlayers
-                        .map { it.id }
-                        .filter { it !in offTeam }
-                        .take(requiredOffPlayers - offTeam.size)
-                    offTeam = offTeam + additionalPlayers
-                }
-
-                // Mise à jour de la rotation des joueurs Off
-                offRotationSet.addAll(offTeam)
-                if (offRotationSet.size >= presentPlayers.size) {
-                    // Réinitialiser le cycle de rotation quand tous les joueurs sont passés en Off
-                    offRotationSet.clear()
-                }
-
-                // Calcul de l'équilibre des compétences
+                // Form the off-team
+                val offTeam = offPlayers.take(requiredOffPlayers).map { it.id }
                 val teamSkills = teams.map { calculateTeamSkill(it.playerIds) }
                 val maxSkill = teamSkills.maxOrNull() ?: 0
                 val minSkill = teamSkills.minOrNull() ?: 0
@@ -109,15 +85,10 @@ class MatchViewModel @Inject constructor(
 
                 if (skillDifference <= maxSkillDifference && offTeam.size == requiredOffPlayers) {
                     _shuffledTeams.value = teams + Team(teamId = -1, playerIds = offTeam)
-                    previousTeams.addAll(teams.map { it.playerIds.sorted() })
-                    previousOffTeam.clear()
-                    previousOffTeam.addAll(offTeam)
-                    Log.d("MatchViewModel", "Balanced teams found with unique Off team.")
                     saveTeamsToHistory()
                     return@launch
                 }
 
-                // Enregistrer la meilleure tentative si aucune combinaison parfaite n'est trouvée
                 if (skillDifference < minSkillDifference) {
                     minSkillDifference = skillDifference
                     bestTeams = teams
@@ -125,15 +96,12 @@ class MatchViewModel @Inject constructor(
                 }
             }
 
-            // Utiliser la meilleure tentative si aucune combinaison unique n'a été trouvée
+            // Use the best attempt if no perfect balance was found
             _shuffledTeams.value = bestTeams + Team(teamId = -1, playerIds = bestOffTeam)
-            previousOffTeam.clear()
-            previousOffTeam.addAll(bestOffTeam)
-
-            Log.d("MatchViewModel", "Best attempt used with skill difference: $minSkillDifference.")
             saveTeamsToHistory()
         }
     }
+
 
     private val _updateSuccess = MutableLiveData<Boolean>()
     val updateSuccess: LiveData<Boolean> get() = _updateSuccess
@@ -141,6 +109,7 @@ class MatchViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 playerRepository.incrementPlayersOffcount(offPlayerIds)
+                Log.d("OffPlayersIncrement","PlayersIds Incremented : ${offPlayerIds}")
                 _updateSuccess.value = true // Set success status
             } catch (e: Exception) {
                 _updateSuccess.value = false // Set failure status
