@@ -76,7 +76,7 @@ class MatchFragment : Fragment() {
     }
 
     private fun setupShuffleButton(numCourts: Int) {
-        binding?.let { safeBinding ->
+        binding.let { safeBinding ->
             // Utilisation sécurisée de safeBinding
             binding.buttonShuffleMatch.setOnClickListener {
                 matchViewModel.shuffleTeams(numCourts) // Trigger the shuffle in ViewModel
@@ -94,7 +94,7 @@ class MatchFragment : Fragment() {
 
     private fun displayCourtsAndOffPlayers(teams: List<Team>, numCourts: Int) {
         Log.d("MatchFragment", "Requested to display $numCourts courts with teams: $teams")
-        binding?.let { safeBinding ->
+        binding.let { safeBinding ->
             binding.courtsContainer.removeAllViews()
         }
         val playersPerCourt = 4
@@ -173,7 +173,7 @@ class MatchFragment : Fragment() {
                     courtContainer.addView(team2Container)
 
                     // Ajouter le court au conteneur principal
-                    binding?.let { safeBinding ->
+                    binding.let { safeBinding ->
                         binding.courtsContainer.addView(courtContainer)
                     }
                     Log.d("MatchFragment", "Court $index added to courtsContainer.")
@@ -207,14 +207,14 @@ class MatchFragment : Fragment() {
     // Helper to display off players
     private fun displayOffPlayers(offPlayers: List<Player>) {
         val offPlayersTitle = TextView(requireContext()).apply {
-            text = "Off Players:"
+            text = context.getString(R.string.off_players)+":"
             textSize = 18f
             setTypeface(null, Typeface.BOLD)
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
-        binding?.let { safeBinding ->
+        binding.let { safeBinding ->
             binding.courtsContainer.addView(offPlayersTitle)
         }
 
@@ -234,7 +234,7 @@ class MatchFragment : Fragment() {
             }
             offPlayersLayout.addView(playerView)
         }
-        binding?.let { safeBinding ->
+        binding.let { safeBinding ->
             binding.courtsContainer.addView(offPlayersLayout)
         }
 

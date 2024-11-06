@@ -9,14 +9,14 @@
         android:id="@+id/editTextPlayerName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Player Name"
+        android:hint="@string/player_name"
         android:inputType="text" />
 
     <EditText
         android:id="@+id/editTextPlayerSkill"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Skill Level"
+        android:hint="@string/skill_level"
         android:inputType="number" />
 
 </LinearLayout>
