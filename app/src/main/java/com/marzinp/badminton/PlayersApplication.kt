@@ -22,7 +22,6 @@ import com.marzinp.badminton.repository.MatchRepository
 import com.marzinp.badminton.model.Player
 import com.marzinp.badminton.repository.PlayerRepository
 import com.marzinp.badminton.database.PlayerRoomDatabase
-import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

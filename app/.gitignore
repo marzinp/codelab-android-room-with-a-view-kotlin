@@ -1,1 +1,12 @@
-/build
+# Ignore everything
+/*
+
+# Except the main module
+!/main/
+!/main/**
+
+# Optionally, include specific files in the root directory if needed
+!/.gitignore
+!/build.gradle
+!/settings.gradle
+!/gradle.properties
